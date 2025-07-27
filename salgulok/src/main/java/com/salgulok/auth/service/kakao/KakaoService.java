@@ -17,13 +17,13 @@ import java.util.Map;
 @Slf4j
 public class KakaoService {
 
-    private final KakaoProperties kakaoProperties;
+    private final KakaoUtils kakaoUtils;
     private final RestClient restClient;
 
     public KakaoUserInfo getKakaoIdFromAccessToken(String kakaoAccessToken) {
         KakaoTokenResponse accessTokenFromKakao = getAccessTokenFromKakao(kakaoAccessToken);
 
-        String userInfoUrl = kakaoProperties.getUserInfoUrl();
+        String userInfoUrl = kakaoUtils.getUserInfoUrl();
         Map body = restClient.get()
                 .uri(userInfoUrl)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessTokenFromKakao.getAccessToken())
@@ -37,9 +37,9 @@ public class KakaoService {
     }
 
     public KakaoTokenResponse getAccessTokenFromKakao(String code) {
-        String tokenUrl = kakaoProperties.getTokenUrl();
+        String tokenUrl = kakaoUtils.getTokenUrl();
 
-        MultiValueMap<String, String> tokenRequestBody = kakaoProperties.createTokenRequestBody(code);
+        MultiValueMap<String, String> tokenRequestBody = kakaoUtils.createTokenRequestBody(code);
 
         return restClient.post()
                 .uri(tokenUrl)

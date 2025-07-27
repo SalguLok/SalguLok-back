@@ -11,12 +11,12 @@ import java.security.Key;
 
 @Component
 @Getter
-public class JwtProperties {
+public class JwtUtils {
     private final String secretKey;
     private final long accessTokenExpiration = 1000 * 60 * 60; // 1시간
     private final long refreshTokenExpiration = 1000 * 60 * 60 * 24 * 31; // 1달(31일)
 
-    public JwtProperties(@Value("${jwt.secret.key}") String secretKey) {
+    public JwtUtils(@Value("${jwt.secret.key}") String secretKey) {
         this.secretKey = secretKey;
     }
 
