@@ -13,14 +13,14 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
-    private final JwtProperties jwtProperties;
+    private final JwtUtils jwtUtils;
 
     public String createAccessToken(User user) {
-        return createToken(user.getUserId(), jwtProperties.getAccessTokenExpiration());
+        return createToken(user.getUserId(), jwtUtils.getAccessTokenExpiration());
     }
 
     public String createRefreshToken(User user) {
-        return createToken(user.getUserId(), jwtProperties.getRefreshTokenExpiration());
+        return createToken(user.getUserId(), jwtUtils.getRefreshTokenExpiration());
     }
 
     private String createToken(Long userId, long expiration) {
@@ -32,7 +32,7 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expireTime)
-                .signWith(jwtProperties.getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(jwtUtils.getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 }

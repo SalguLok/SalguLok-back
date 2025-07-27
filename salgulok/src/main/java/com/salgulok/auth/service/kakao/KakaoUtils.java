@@ -8,16 +8,16 @@ import org.springframework.util.MultiValueMap;
 
 @Component
 @Getter
-public class KakaoProperties {
+public class KakaoUtils {
     private final String clientId;
     private final String redirectUri;
     private final String tokenUrl;
     private final String userInfoUrl;
 
-    public KakaoProperties(@Value("${kakao.client-id}") String clientId,
-                           @Value("${kakao.redirect-uri}") String redirectUri,
-                           @Value("${kakao.token-uri}") String tokenUri,
-                           @Value("${kakao.user-info-uri}") String userInfoUri) {
+    public KakaoUtils(@Value("${kakao.client-id}") String clientId,
+                      @Value("${kakao.redirect-uri}") String redirectUri,
+                      @Value("${kakao.token-uri}") String tokenUri,
+                      @Value("${kakao.user-info-uri}") String userInfoUri) {
         this.clientId = clientId;
         this.redirectUri = redirectUri;
         this.tokenUrl = tokenUri;
