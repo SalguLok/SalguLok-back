@@ -47,8 +47,7 @@ public class User {
     private LocalDateTime lastLoginAt;
 
     @Builder
-    public User(String username, Long kakaoId) {
-        this.username = username;
+    public User(Long kakaoId) {
         this.kakaoId =  kakaoId;
     }
 
