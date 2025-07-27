@@ -1,4 +1,4 @@
-package com.salgulok.auth.domain;
+package com.salgulok.user.domain;
 
 import com.salgulok.region.domain.Region;
 import jakarta.persistence.*;
