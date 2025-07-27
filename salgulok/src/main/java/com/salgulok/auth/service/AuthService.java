@@ -1,11 +1,11 @@
 package com.salgulok.auth.service;
 
-import com.salgulok.auth.domain.User;
+import com.salgulok.user.domain.User;
 import com.salgulok.auth.dto.request.KakaoCodeRequest;
 import com.salgulok.auth.dto.response.JwtTokenResponse;
 import com.salgulok.auth.dto.summary.KakaoUserInfo;
-import com.salgulok.auth.repository.UserRepository;
-import com.salgulok.auth.service.jwt.JwtTokenProvider;
+import com.salgulok.user.repository.UserRepository;
+import com.salgulok.auth.service.jwt.JwtManager;
 import com.salgulok.auth.service.jwt.RefreshTokenService;
 import com.salgulok.auth.service.kakao.KakaoService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final KakaoService kakaoService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtManager jwtManager;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
 
@@ -43,8 +43,8 @@ public class AuthService {
     }
 
     private JwtTokenResponse createTokens(User user, HttpServletResponse response){
-        String accessToken = jwtTokenProvider.createAccessToken(user);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user);
+        String accessToken = jwtManager.createAccessToken(user);
+        String refreshToken = jwtManager.createRefreshToken(user);
 
         refreshTokenService.save(user, refreshToken); // refresh token Redis에 저장
         return new JwtTokenResponse(accessToken, refreshToken);
