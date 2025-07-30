@@ -15,11 +15,17 @@ import static lombok.AccessLevel.PROTECTED;
 @NoArgsConstructor(access = PROTECTED)
 public class Region {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long regionId;
 
     @Column(nullable = false)
     private String name;
+
+    public Region(long regionId, String name) {
+        this.regionId = regionId;
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+    }
 
     @Column(nullable = false)
     @CreatedDate
