@@ -8,12 +8,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 
 @Configuration
-public class WebClientConfig {
+public class TourWebClientConfig {
     @Value("${tourapi.url}")
     private String tourApiUrl;
 
     @Bean
-    public WebClient webClient(@Value("${tourapi.url}") String tourApiUrl) {
+    public WebClient tourApiWebClient() {
         return WebClient.builder()
                 .baseUrl(tourApiUrl)  // 환경변수에서 주입된 Base URL
                 .build();

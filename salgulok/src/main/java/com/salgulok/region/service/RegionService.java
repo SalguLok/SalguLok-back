@@ -1,6 +1,5 @@
 package com.salgulok.region.service;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salgulok.region.domain.Region;
@@ -26,9 +25,6 @@ public class RegionService {
     private String serviceKey;
 
     private final RegionRepository regionRepository;
-
-
-
 
 
     // TourAPI에서 지역 코드 불러와 DB 저장
