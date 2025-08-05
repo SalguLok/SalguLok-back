@@ -48,4 +48,13 @@ public class LogEntryController {
         return ResponseEntity.noContent().build(); // 204 No Content
     }
 
+    @DeleteMapping("/templates/{templateId}")
+    public ResponseEntity<Void> deleteTemplate(
+            @PathVariable Long templateId
+    ) {
+        logEntryService.deleteTemplate(templateId);
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+
 }
