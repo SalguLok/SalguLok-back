@@ -65,4 +65,26 @@ public class LogEntryService {
             }
         }
     }
+
+    /**
+     * 하루 기록 수정 (기존 템플릿 수정 + 이미지 수정 포함)
+     */
+    @Transactional
+    public void updateLogEntry(User user, Long entryId, LogEntryUpdateRequest request) {
+        LogEntry logEntry = logEntryRepository.findById(entryId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        for (TemplateUpdateRequest templateReq : request.getTemplates()) {
+            Template template = templateRepository.findById(templateReq.getTemplateId())
+                    .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
+
+            template.update(templateReq.getText(), templateReq.getRating());
+
+            templateImageRepository.deleteAllByTemplate(template);
+
+            for (String imageUrl : templateReq.getImageUrls()) {
+                templateImageRepository.save(new TemplateImage(template, imageUrl));
+            }
+        }
+    }
 }
