@@ -28,6 +28,11 @@ public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
     private final TemplateRepository templateRepository;
     private final TemplateImageRepository templateImageRepository;
+    private final PlaceRepository placeRepository;
+
+    /**
+     * com.salgulok.place.repository.PlaceRepository 만들거라는 가정! 으로 추가함
+     */
 
     /**
      * 하루 기록 생성 (LogEntry + Templates + TemplateImages)
