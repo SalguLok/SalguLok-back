@@ -40,4 +40,9 @@ public class LogEntry {
 
     @Lob
     private String summary; // 하루 마무리 멘트
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
 }
