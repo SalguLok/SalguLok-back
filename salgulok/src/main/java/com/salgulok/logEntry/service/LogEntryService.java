@@ -128,5 +128,35 @@ public class LogEntryService {
         templateRepository.delete(template);
     }
 
+    @Transactional
+    public void savePlaceRating(PlaceRatingRequest request) {
+        // 장소 조회
+        Place place = placeRepository.findById(request.getPlaceId())
+                .orElseThrow(() -> new SalgulokException(ErrorCode.PLACE_NOT_FOUND));
+
+        // 새 평점으로 평균 계산
+        double totalScore = place.getRating() * place.getRatingCount();
+        int newCount = place.getRatingCount() + 1;
+        double newAverage = (totalScore + request.getRating()) / newCount;
+
+        // 업데이트
+        place.updateRating(newAverage, newCount);
+    }
+
+    @Transactional
+    public void saveSummary(Long entryId, String summary) {
+        LogEntry logEntry = logEntryRepository.findById(entryId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        logEntry.setSummary(summary);
+    }
+
+    @Transactional(readOnly = true)
+    public String getSummary(Long entryId) {
+        LogEntry logEntry = logEntryRepository.findById(entryId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        return logEntry.getSummary();
+    }
 
 }
