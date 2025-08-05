@@ -1,11 +1,18 @@
 package com.salgulok.logEntry.repository;
 
-import com.salgulok.logEntry.domain.TemplateImage;
+import com.salgulok.logEntry.domain.LogEntry;
+import com.salgulok.logEntry.domain.Template;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /**
- * 템플릿 이미지(TemplateImage) 엔티티에 대한 JPA 레포지토리
- * - 각 템플릿에 연결된 이미지들을 저장/조회
+ * 장소별 템플릿(Template) 엔티티에 대한 JPA 레포지토리
+ * - 하루 기록(LogEntry)에 포함된 장소 템플릿들을 저장/조회
  */
-public interface TemplateImageRepository extends JpaRepository<TemplateImage, Long> {
+
+public interface TemplateRepository extends JpaRepository<Template, Long> {
+
+    // 하루 기록에 포함된 모든 템플릿 조회
+    List<Template> findAllByLogEntry(LogEntry logEntry);
 }

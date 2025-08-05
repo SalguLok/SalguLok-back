@@ -87,4 +87,29 @@ public class LogEntryService {
             }
         }
     }
+
+    /**
+     * 하루 기록 삭제 (LogEntry + Templates + TemplateImages)
+     */
+    @Transactional
+    public void deleteLogEntry(User user, Long entryId) {
+        // 1. 삭제 대상 하루 기록 조회
+        LogEntry logEntry = logEntryRepository.findById(entryId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        // 2. 해당 하루 기록에 속한 모든 템플릿 조회
+        List<Template> templates = templateRepository.findAllByLogEntry(logEntry);
+
+        for (Template template : templates) {
+            // 2-1. 이미지 먼저 삭제
+            templateImageRepository.deleteAllByTemplate(template);
+
+            // 2-2. 템플릿 삭제
+            templateRepository.delete(template);
+        }
+
+        // 3. 하루 기록(LogEntry) 삭제
+        logEntryRepository.delete(logEntry);
+    }
+
 }
