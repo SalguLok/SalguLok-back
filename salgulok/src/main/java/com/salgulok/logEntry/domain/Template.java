@@ -43,4 +43,10 @@ public class Template {
         this.text = text;
         this.rating = rating;
     }
+
+    public void update(String text, int rating) {
+        this.text = text;
+        this.rating = rating;
+    }
+
 }
