@@ -37,4 +37,7 @@ public class LogEntry {
         this.log = log;
         this.entryDate = entryDate;
     }
+
+    @Lob
+    private String summary; // 하루 마무리 멘트
 }

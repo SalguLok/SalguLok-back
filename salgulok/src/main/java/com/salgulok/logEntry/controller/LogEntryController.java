@@ -56,5 +56,29 @@ public class LogEntryController {
         return ResponseEntity.noContent().build(); // 204
     }
 
+    @PostMapping("/place-ratings")
+    public ResponseEntity<Void> savePlaceRating(
+            @RequestBody PlaceRatingRequest request
+    ) {
+        logEntryService.savePlaceRating(request);
+        return ResponseEntity.ok().build(); // 200 OK
+    }
+
+    @PutMapping("/log-entries/{entryId}/summary")
+    public ResponseEntity<Void> saveSummary(
+            @PathVariable Long entryId,
+            @RequestBody String summary
+    ) {
+        logEntryService.saveSummary(entryId, summary);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/log-entries/{entryId}/summary")
+    public ResponseEntity<String> getSummary(
+            @PathVariable Long entryId
+    ) {
+        String summary = logEntryService.getSummary(entryId);
+        return ResponseEntity.ok(summary);
+    }
 
 }
