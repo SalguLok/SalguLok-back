@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/tour")
+@RequestMapping("/tour/api")
 public class LocationTourController {
     private final LocationTourService tourService;
 
