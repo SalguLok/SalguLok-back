@@ -39,4 +39,13 @@ public class LogEntryController {
         return ResponseEntity.ok().build();                     // 응답 200 OK
     }
 
+    @DeleteMapping("/log-entries/{entryId}")
+    public ResponseEntity<Void> deleteLogEntry(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long entryId
+    ) {
+        logEntryService.deleteLogEntry(user, entryId);
+        return ResponseEntity.noContent().build(); // 204 No Content
+    }
+
 }
