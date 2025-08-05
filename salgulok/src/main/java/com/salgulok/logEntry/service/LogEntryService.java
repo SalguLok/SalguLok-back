@@ -112,4 +112,21 @@ public class LogEntryService {
         logEntryRepository.delete(logEntry);
     }
 
+    /**
+     * 템플릿 하나 삭제 (이미지 포함)
+     */
+    @Transactional
+    public void deleteTemplate(Long templateId) {
+        // 1. 삭제 대상 템플릿 조회
+        Template template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
+
+        // 2. 이미지 먼저 삭제
+        templateImageRepository.deleteAllByTemplate(template);
+
+        // 3. 템플릿 삭제
+        templateRepository.delete(template);
+    }
+
+
 }
