@@ -2,6 +2,7 @@ package com.salgulok.logEntry.controller;
 
 import com.salgulok.logEntry.dto.request.LogEntryCreateRequest;
 import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
+import com.salgulok.logEntry.dto.response.LogEntryUpdateResponse;
 import com.salgulok.logEntry.service.LogEntryService;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -38,17 +39,17 @@ public class LogEntryController {
     }
 
 
-    @PutMapping("/log-entries/{entryId}")
-    public ResponseEntity<Void> updateLogEntry(
-            @AuthenticationPrincipal User user,              // 로그인한 사용자 정보
-            @PathVariable Long entryId,                      // 수정할 하루 기록 ID
-            @RequestBody LogEntryUpdateRequest request       // 수정할 템플릿 리스트
+    @PutMapping("/{entryId}")
+    public ResponseEntity<LogEntryUpdateResponse> updateLogEntry(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long entryId,
+            @RequestBody @Valid LogEntryUpdateRequest request
     ) {
-        logEntryService.updateLogEntry(user, entryId, request); // 서비스 호출
-        return ResponseEntity.ok().build();                     // 응답 200 OK
+        LogEntryUpdateResponse response = logEntryService.updateLogEntry(user, entryId, request);
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/log-entries/{entryId}")
+    @DeleteMapping("/{entryId}")
     public ResponseEntity<Void> deleteLogEntry(
             @AuthenticationPrincipal User user,
             @PathVariable Long entryId
@@ -75,7 +76,7 @@ public class LogEntryController {
     }
      */
 
-    @PutMapping("/log-entries/{entryId}/summary")
+    @PutMapping("{entryId}/summary")
     public ResponseEntity<Void> saveSummary(
             @PathVariable Long entryId,
             @RequestBody String summary
@@ -84,7 +85,7 @@ public class LogEntryController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/log-entries/{entryId}/summary")
+    @GetMapping("{entryId}/summary")
     public ResponseEntity<String> getSummary(
             @PathVariable Long entryId
     ) {

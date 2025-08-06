@@ -12,6 +12,7 @@ import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
 import com.salgulok.logEntry.dto.request.TemplateCreateRequest;
 import com.salgulok.logEntry.dto.request.TemplateUpdateRequest;
 import com.salgulok.logEntry.dto.response.LogEntryCreateResponse;
+import com.salgulok.logEntry.dto.response.LogEntryUpdateResponse;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,22 +95,32 @@ public class LogEntryService {
      * 하루 기록 수정 (기존 템플릿 수정 + 이미지 수정 포함)
      */
     @Transactional
-    public void updateLogEntry(User user, Long entryId, LogEntryUpdateRequest request) {
+    public LogEntryUpdateResponse updateLogEntry(User user, Long entryId, LogEntryUpdateRequest request) {
+        // 1. 로그 엔트리 조회
         LogEntry logEntry = logEntryRepository.findById(entryId)
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
 
+        // 2. 수정된 템플릿들을 담을 리스트
+        List<Template> updatedTemplates = new ArrayList<>();
+
+        // 3. 각 템플릿 수정 처리
         for (TemplateUpdateRequest templateReq : request.getTemplates()) {
             Template template = templateRepository.findById(templateReq.getTemplateId())
                     .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
 
+            // 텍스트, 별점 업데이트
             template.update(templateReq.getText(), templateReq.getRating());
+            updatedTemplates.add(template);
 
+            // 기존 이미지 삭제 후 새 이미지 저장
             templateImageRepository.deleteAllByTemplate(template);
-
             for (String imageUrl : templateReq.getImageUrls()) {
                 templateImageRepository.save(new TemplateImage(template, imageUrl));
             }
         }
+
+        // 4. 응답 리턴
+        return LogEntryUpdateResponse.from(logEntry, updatedTemplates);
     }
 
     /**
