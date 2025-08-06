@@ -1,6 +1,7 @@
 package com.salgulok.logEntry.controller;
 
 import com.salgulok.logEntry.dto.request.LogEntryCreateRequest;
+import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
 import com.salgulok.logEntry.service.LogEntryService;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class LogEntryController {
         return ResponseEntity.noContent().build(); // 204
     }
 
+    /** 장소 별점 필요한거 일단 주석 처리
     @PostMapping("/place-ratings")
     public ResponseEntity<Void> savePlaceRating(
             @RequestBody PlaceRatingRequest request
@@ -63,6 +65,7 @@ public class LogEntryController {
         logEntryService.savePlaceRating(request);
         return ResponseEntity.ok().build(); // 200 OK
     }
+     */
 
     @PutMapping("/log-entries/{entryId}/summary")
     public ResponseEntity<Void> saveSummary(
