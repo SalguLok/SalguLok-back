@@ -11,6 +11,7 @@ import com.salgulok.logEntry.dto.request.LogEntryCreateRequest;
 import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
 import com.salgulok.logEntry.dto.request.TemplateCreateRequest;
 import com.salgulok.logEntry.dto.request.TemplateUpdateRequest;
+import com.salgulok.logEntry.dto.response.LogEntryCreateResponse;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
@@ -22,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 하루 기록(LogEntry), 템플릿(Template), 이미지(TemplateImage)를 저장하는 서비스
@@ -47,7 +49,7 @@ public class LogEntryService {
      * @param request 하루 기록 저장 요청 DTO
      */
     @Transactional
-    public Long createLogEntry(User user, LogEntryCreateRequest request) {
+    public LogEntryCreateResponse createLogEntry(User user, LogEntryCreateRequest request) {
         // 1. logId로 한 달 단위 살구록(Log) 조회
         Log log = logRepository.findById(request.getLogId())
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
@@ -56,27 +58,36 @@ public class LogEntryService {
         LogEntry logEntry = new LogEntry(log, request.getEntryDate());
         logEntryRepository.save(logEntry);
 
-        // 3. 템플릿(Template) 리스트 반복 처리
-        for (TemplateCreateRequest templateReq : request.getTemplates()) {
-            // 템플릿 엔티티 생성
-            Template template = new Template(
-                    logEntry,
-                    templateReq.getPlaceId(),
-                    templateReq.getText(),
-                    templateReq.getRating()
-            );
-            templateRepository.save(template);
+        // 3. 템플릿 리스트 생성
+        List<Template> templates = request.getTemplates().stream()
+                .map(templateReq -> new Template(
+                        logEntry,
+                        templateReq.getPlaceId(),
+                        templateReq.getText(),
+                        templateReq.getRating()
+                ))
+                .collect(Collectors.toList());
 
-            // 4. 이미지 URL 리스트 반복 저장
-            if (templateReq.getImageUrls() != null) {
-                for (String imageUrl : templateReq.getImageUrls()) {
-                    TemplateImage image = new TemplateImage(template, imageUrl);
-                    templateImageRepository.save(image);
-                }
+        // 4. 템플릿 일괄 저장
+        List<Template> savedTemplates = templateRepository.saveAll(templates);
+
+        // 5. 이미지 저장
+        for (int i = 0; i < savedTemplates.size(); i++) {
+            Template savedTemplate = savedTemplates.get(i);
+            List<String> imageUrls = request.getTemplates().get(i).getImageUrls();
+
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+                List<TemplateImage> images = imageUrls.stream()
+                        .map(url -> new TemplateImage(savedTemplate, url))
+                        .collect(Collectors.toList());
+                templateImageRepository.saveAll(images);
             }
         }
-        return logEntry.getLogEntryId();
+
+        // 6. entryId + templateId + placeId 응답 리턴
+        return LogEntryCreateResponse.from(logEntry, savedTemplates);
     }
+
 
     /**
      * 하루 기록 수정 (기존 템플릿 수정 + 이미지 수정 포함)

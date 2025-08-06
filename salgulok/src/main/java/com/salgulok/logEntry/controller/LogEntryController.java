@@ -33,8 +33,8 @@ public class LogEntryController {
             @AuthenticationPrincipal User user,
             @RequestBody @Valid LogEntryCreateRequest request
     ) {
-        Long entryId = logEntryService.createLogEntry(user, request);
-        return ResponseEntity.ok(new LogEntryCreateResponse(entryId));
+        LogEntryCreateResponse response = logEntryService.createLogEntry(user, request);
+        return ResponseEntity.ok(response);
     }
 
 
