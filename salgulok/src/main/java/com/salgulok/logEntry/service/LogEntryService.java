@@ -18,6 +18,8 @@ import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class LogEntryService {
      * @param request 하루 기록 저장 요청 DTO
      */
     @Transactional
-    public void createLogEntry(User user, LogEntryCreateRequest request) {
+    public Long createLogEntry(User user, LogEntryCreateRequest request) {
         // 1. logId로 한 달 단위 살구록(Log) 조회
         Log log = logRepository.findById(request.getLogId())
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
@@ -73,6 +75,7 @@ public class LogEntryService {
                 }
             }
         }
+        return logEntry.getLogEntryId();
     }
 
     /**
