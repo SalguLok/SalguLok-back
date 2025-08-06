@@ -3,7 +3,7 @@ package com.salgulok.user.service;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.user.domain.User;
-import com.salgulok.user.dto.request.CreateUserInfoRequest;
+import com.salgulok.user.dto.request.UserInfoRequest;
 import com.salgulok.user.dto.request.NicknameRequest;
 import com.salgulok.user.dto.response.UserResponse;
 import com.salgulok.user.dto.response.UsernameDuplicateResponse;
@@ -25,12 +25,19 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse createUserInfo(User user, CreateUserInfoRequest request) {
+    public UserResponse updateUserProfile(User user, UserInfoRequest request) {
+        User findUser = findByUserId(user.getUserId());
+        findUser.updateUserInfo(request.getUsername(), request.getIntro(), request.getProfileImg());
+        return UserResponse.from(findUser);
+    }
+
+    @Transactional
+    public UserResponse createUserInfo(User user, UserInfoRequest request) {
         if(user.getIntro() != null || user.getProfileImg() != null || user.getUsername() != null){
             throw new SalgulokException(ErrorCode.USER_INFO_EXIST);
         }
         User findUser = findByUserId(user.getUserId());
-        findUser.createUserInfo(request.getUsername(), request.getIntro(), request.getProfileImg());
+        findUser.updateUserInfo(request.getUsername(), request.getIntro(), request.getProfileImg());
         return UserResponse.from(findUser);
     }
 

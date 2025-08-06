@@ -1,7 +1,7 @@
 package com.salgulok.user.controller;
 
 import com.salgulok.user.domain.User;
-import com.salgulok.user.dto.request.CreateUserInfoRequest;
+import com.salgulok.user.dto.request.UserInfoRequest;
 import com.salgulok.user.dto.request.NicknameRequest;
 import com.salgulok.user.dto.response.UserResponse;
 import com.salgulok.user.dto.response.UsernameDuplicateResponse;
@@ -24,8 +24,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyInfo(user));
     }
 
-    @PatchMapping("/info")
-    public ResponseEntity<UserResponse> userInfoEnter(@AuthenticationPrincipal User user, @Valid @RequestBody CreateUserInfoRequest request){
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponse> updateUserProfile(@AuthenticationPrincipal User user, @Valid @RequestBody UserInfoRequest request){
+        UserResponse response = userService.updateUserProfile(user, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/info")
+    public ResponseEntity<UserResponse> userInfoEnter(@AuthenticationPrincipal User user, @Valid @RequestBody UserInfoRequest request){
         UserResponse response = userService.createUserInfo(user, request);
         return ResponseEntity.ok(response);
     }

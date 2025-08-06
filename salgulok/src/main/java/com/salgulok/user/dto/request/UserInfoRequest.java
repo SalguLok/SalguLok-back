@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class CreateUserInfoRequest {
+public class UserInfoRequest {
     @NotNull(message = "닉네임을 입력해주세요.")
     private String username;
 
