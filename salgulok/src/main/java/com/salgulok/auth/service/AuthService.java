@@ -1,6 +1,5 @@
 package com.salgulok.auth.service;
 
-import com.salgulok.auth.dto.response.LoginResponse;
 import com.salgulok.user.domain.User;
 import com.salgulok.auth.dto.request.KakaoCodeRequest;
 import com.salgulok.auth.dto.response.JwtTokenResponse;
@@ -26,24 +25,21 @@ public class AuthService {
     private final UserRepository userRepository;
 
     @Transactional
-    public LoginResponse kakaoLoginOrSignUp(KakaoCodeRequest request, HttpServletResponse response){
+    public JwtTokenResponse kakaoLoginOrSignUp(KakaoCodeRequest request, HttpServletResponse response){
         String kakaoAccessToken = request.getCode();
         KakaoUserInfo userInfo = kakaoService.getKakaoIdFromAccessToken(kakaoAccessToken);
-
         Long kakaoId = userInfo.getKakaoId();
-        User user = userRepository.findByKakaoId(kakaoId).orElse(null);
-        boolean isNewUser = false;
 
         // 존재하는 회원이 없으면 회원 저장 후 토큰 발급
-        if (user == null) {
-            isNewUser = true;
-            user = userRepository.save(User.builder()
-                    .kakaoId(kakaoId)
-                    .build());
-        }
+        User user = userRepository.findByKakaoId(kakaoId)
+                .orElseGet(() -> {
+                    User newUser = User.builder()
+                            .kakaoId(kakaoId)
+                            .build();
+                    return userRepository.save(newUser);
+                });
 
-        JwtTokenResponse token = createTokens(user, response);
-        return new LoginResponse(token, isNewUser);
+        return createTokens(user, response);
     }
 
     private JwtTokenResponse createTokens(User user, HttpServletResponse response){
