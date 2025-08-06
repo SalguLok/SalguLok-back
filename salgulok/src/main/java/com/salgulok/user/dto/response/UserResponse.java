@@ -9,13 +9,13 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class UserInfoResponse {
+public class UserResponse {
     private String nickname;
     private String intro;
     private String profileImg;
 
-    public static UserInfoResponse from(User user) {
-        return UserInfoResponse.builder()
+    public static UserResponse from(User user) {
+        return UserResponse.builder()
                 .nickname(user.getUsername())
                 .intro(user.getIntro())
                 .profileImg(user.getProfileImg())

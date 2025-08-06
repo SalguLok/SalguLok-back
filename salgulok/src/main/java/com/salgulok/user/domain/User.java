@@ -54,4 +54,10 @@ public class User {
     public void updateLastLoginAt() {
         this.lastLoginAt = LocalDateTime.now();
     }
+
+    public void createUserInfo(String username, String intro, String profileImg){
+        this.username = username;
+        this.intro = intro;
+        this.profileImg = profileImg;
+    }
 }

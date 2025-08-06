@@ -18,6 +18,7 @@ public enum ErrorCode {
     ACCESS_TOKEN_EXPIRED(401, "엑세스 토큰이 만료됐습니다."),
     USER_NOT_FOUND(404, "존재하는 사용자가 없습니다."),
     OWNER_MISMATCH(400, "수정 및 삭제 권한이 존재하지 않습니다."),
+    USER_INFO_EXIST(400, "첫 회원가입자가 아닙니다."),
 
     // region
     REGION_NOT_FOUND(404, "존재하는 지역코드가 없습니다."),
