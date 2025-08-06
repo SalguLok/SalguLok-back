@@ -8,6 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.salgulok.logEntry.dto.response.LogEntryCreateResponse;
+import org.springframework.web.bind.annotation.PostMapping;
+import jakarta.validation.Valid;
+
+
 
 @RestController
 @RequestMapping("/log-entries")
@@ -24,11 +29,14 @@ public class LogEntryController {
      * @return 성공 시 201 Created 응답
      */
     @PostMapping
-    public ResponseEntity<Void> createLogEntry(@AuthenticationPrincipal User user,
-                                               @RequestBody LogEntryCreateRequest request) {
-        logEntryService.createLogEntry(user, request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<LogEntryCreateResponse> createLogEntry(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid LogEntryCreateRequest request
+    ) {
+        Long entryId = logEntryService.createLogEntry(user, request);
+        return ResponseEntity.ok(new LogEntryCreateResponse(entryId));
     }
+
 
     @PutMapping("/log-entries/{entryId}")
     public ResponseEntity<Void> updateLogEntry(
