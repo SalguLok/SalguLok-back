@@ -21,12 +21,6 @@ public class Region {
     @Column(nullable = false)
     private String name;
 
-    public Region(long regionId, String name) {
-        this.regionId = regionId;
-        this.name = name;
-        this.createdAt = LocalDateTime.now();
-    }
-
     @Column(nullable = false)
     @CreatedDate
     private LocalDateTime createdAt;
