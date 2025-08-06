@@ -24,7 +24,10 @@ public enum ErrorCode {
 
     // salgulog
     SALGULOG_NOT_FOUND(404, "존재하는 살구로그가 없습니다."),
-    INVALID_DATE_RANGE(400, "시작날짜는 종료일보다 이전이어야 합니다.");
+    INVALID_DATE_RANGE(400, "시작날짜는 종료일보다 이전이어야 합니다."),
+
+    // logEntry
+    TEMPLATE_NOT_FOUND(404, "존재하는 템플릿이 없습니다.");
 
     private final int status;
     private final String message;

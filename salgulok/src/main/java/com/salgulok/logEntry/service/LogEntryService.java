@@ -8,7 +8,9 @@ import com.salgulok.logEntry.domain.LogEntry;
 import com.salgulok.logEntry.domain.Template;
 import com.salgulok.logEntry.domain.TemplateImage;
 import com.salgulok.logEntry.dto.request.LogEntryCreateRequest;
+import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
 import com.salgulok.logEntry.dto.request.TemplateCreateRequest;
+import com.salgulok.logEntry.dto.request.TemplateUpdateRequest;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
@@ -16,6 +18,8 @@ import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 하루 기록(LogEntry), 템플릿(Template), 이미지(TemplateImage)를 저장하는 서비스
@@ -28,7 +32,7 @@ public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
     private final TemplateRepository templateRepository;
     private final TemplateImageRepository templateImageRepository;
-    private final PlaceRepository placeRepository;
+    /** private final PlaceRepository placeRepository; */
 
     /**
      * com.salgulok.place.repository.PlaceRepository 만들거라는 가정! 으로 추가함
@@ -133,6 +137,7 @@ public class LogEntryService {
         templateRepository.delete(template);
     }
 
+    /**
     @Transactional
     public void savePlaceRating(PlaceRatingRequest request) {
         // 장소 조회
@@ -147,6 +152,7 @@ public class LogEntryService {
         // 업데이트
         place.updateRating(newAverage, newCount);
     }
+     */
 
     @Transactional
     public void saveSummary(Long entryId, String summary) {
