@@ -2,7 +2,9 @@ package com.salgulok.user.controller;
 
 import com.salgulok.user.domain.User;
 import com.salgulok.user.dto.request.CreateUserInfoRequest;
+import com.salgulok.user.dto.request.NicknameRequest;
 import com.salgulok.user.dto.response.UserResponse;
+import com.salgulok.user.dto.response.UsernameDuplicateResponse;
 import com.salgulok.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +25,14 @@ public class UserController {
     }
 
     @PatchMapping("/info")
-    public ResponseEntity<UserResponse> UserInfoEnter(@AuthenticationPrincipal User user, @Valid @RequestBody CreateUserInfoRequest request){
+    public ResponseEntity<UserResponse> userInfoEnter(@AuthenticationPrincipal User user, @Valid @RequestBody CreateUserInfoRequest request){
         UserResponse response = userService.createUserInfo(user, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/duplicate")
+    public ResponseEntity<UsernameDuplicateResponse> checkUsernameDuplicate(@Valid @RequestBody NicknameRequest request){
+        UsernameDuplicateResponse response = userService.checkUsernameDuplicate(request);
+        return ResponseEntity.ok(response);
     }
 }

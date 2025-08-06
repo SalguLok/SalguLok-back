@@ -4,7 +4,9 @@ import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.user.domain.User;
 import com.salgulok.user.dto.request.CreateUserInfoRequest;
+import com.salgulok.user.dto.request.NicknameRequest;
 import com.salgulok.user.dto.response.UserResponse;
+import com.salgulok.user.dto.response.UsernameDuplicateResponse;
 import com.salgulok.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,12 @@ public class UserService {
         User findUser = findByUserId(user.getUserId());
         findUser.createUserInfo(request.getUsername(), request.getIntro(), request.getProfileImg());
         return UserResponse.from(findUser);
+    }
+
+    @Transactional(readOnly = true)
+    public UsernameDuplicateResponse checkUsernameDuplicate(NicknameRequest request) {
+        boolean isDuplicate = userRepository.existsByUsername(request.getUsername());
+        return new UsernameDuplicateResponse(isDuplicate);
     }
 
     private User findByUserId(Long userId){
