@@ -1,6 +1,5 @@
 package com.salgulok.tourapi.service;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,12 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class LocationTourService {
+public class KeywordTourService {
 
     private final WebClient tourApiWebClient;
 
@@ -38,21 +39,21 @@ public class LocationTourService {
         };
     }
 
-    public List<LocationTourDto> getNearbyTourInfo(double lat, double lng, int radius) throws JsonProcessingException {
+    public List<LocationTourDto> searchByKeyword(String keyword) throws JsonProcessingException {
 
-        System.out.println("[LocationTourService] 위치 기반 추천 시작");
+        System.out.println("[KeywordTourService] 키워드 검색 시작");
 
-        String url = "https://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+        // keyword 인코딩
+        String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
+
+        String url = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2"
                 + "?serviceKey=" + serviceKey
                 + "&MobileOS=ETC"
-                + "&MobileApp=SalguLok"
-                + "&mapX=" + lng
-                + "&mapY=" + lat
-                + "&radius=" + radius
-                + "&arrange=E"
-                + "&numOfRows=20"
-                + "&_type=json";
-
+                + "&MobileApp=TestApp"
+                + "&_type=json"
+                + "&keyword=" + encodedKeyword
+                + "&numOfRows=" + 20
+                + "&pageNo=" + 1;
 
         String response = tourApiWebClient.get()
                 .uri(URI.create(url))
@@ -60,9 +61,7 @@ public class LocationTourService {
                 .bodyToMono(String.class)
                 .block();
 
-
-        // JSON 파싱 후 DTO 리스트 변환
-        System.out.println("[LocationTourService] 리스트 반환 시작");
+        System.out.println("[KeywordTourService] API 응답 수신 완료");
 
         List<LocationTourDto> result = new ArrayList<>();
         try {
@@ -73,14 +72,13 @@ public class LocationTourService {
             if (items.isArray()) {
                 for (JsonNode item : items) {
                     int contentTypeId = item.path("contenttypeid").asInt(0);
-                    String contentTypeIdStr = item.path("contenttypeid").asText();  // "14" 같은 문자열
+                    String contentTypeIdStr = item.path("contenttypeid").asText();
                     LocationTourDto dto = new LocationTourDto();
                     dto.setTitle(item.path("title").asText(""));
                     dto.setAddress(item.path("addr1").asText(""));
                     dto.setTel(item.path("tel").asText(null));
                     dto.setMapX(item.path("mapx").asDouble());
                     dto.setMapY(item.path("mapy").asDouble());
-                    dto.setDistance(item.path("dist").asDouble(0.0));
                     dto.setContentId(item.path("contentid").asLong(0));
                     dto.setContentTypeId(contentTypeId);
                     dto.setContentType(mapContentType(contentTypeIdStr));
@@ -93,6 +91,7 @@ public class LocationTourService {
         } catch (Exception e) {
             throw new RuntimeException("TourAPI 응답 파싱 실패", e);
         }
+
         return result;
     }
 }
