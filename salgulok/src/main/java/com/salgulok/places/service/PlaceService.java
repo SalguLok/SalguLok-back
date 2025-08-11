@@ -87,8 +87,6 @@ public class PlaceService {
     public List<PlaceResponseDto> searchPlaces(String keyword) {
         List<Place> places = placeRepository.findByPlaceNameContaining(keyword);
 
-        // TODO: 검색 결과가 없을 경우 외부 API 요청해서 가져오기
-
         return places.stream()
                 .map(PlaceResponseDto::from)
                 .collect(Collectors.toList());
