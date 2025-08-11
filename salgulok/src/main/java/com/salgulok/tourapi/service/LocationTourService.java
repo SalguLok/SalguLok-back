@@ -38,7 +38,7 @@ public class LocationTourService {
         };
     }
 
-    public List<LocationTourDto> getNearbyTourInfo(double lat, double lng, int radius) throws JsonProcessingException {
+    public List<LocationTourDto> getNearbyTourInfo(double lat, double lng, int radius) {
 
         System.out.println("[LocationTourService] 위치 기반 추천 시작");
 

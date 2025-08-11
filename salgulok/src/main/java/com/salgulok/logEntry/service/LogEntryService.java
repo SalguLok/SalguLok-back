@@ -7,15 +7,15 @@ import com.salgulok.log.repository.LogRepository;
 import com.salgulok.logEntry.domain.LogEntry;
 import com.salgulok.logEntry.domain.Template;
 import com.salgulok.logEntry.domain.TemplateImage;
-import com.salgulok.logEntry.dto.request.LogEntryCreateRequest;
-import com.salgulok.logEntry.dto.request.LogEntryUpdateRequest;
-import com.salgulok.logEntry.dto.request.TemplateCreateRequest;
-import com.salgulok.logEntry.dto.request.TemplateUpdateRequest;
+import com.salgulok.logEntry.dto.request.*;
 import com.salgulok.logEntry.dto.response.LogEntryCreateResponse;
 import com.salgulok.logEntry.dto.response.LogEntryUpdateResponse;
+import com.salgulok.logEntry.dto.response.PlaceRatingResponse;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
+import com.salgulok.places.domain.Place;
+import com.salgulok.places.repository.PlaceRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
     private final TemplateRepository templateRepository;
     private final TemplateImageRepository templateImageRepository;
-    /** private final PlaceRepository placeRepository; */
+    private final PlaceRepository placeRepository;
 
     /**
      * com.salgulok.place.repository.PlaceRepository 만들거라는 가정! 으로 추가함
@@ -66,7 +68,7 @@ public class LogEntryService {
                         logEntry,
                         templateReq.getPlaceId(),
                         templateReq.getText(),
-                        templateReq.getRating()
+                        templateReq.getStar()
                 ))
                 .collect(Collectors.toList());
 
@@ -109,7 +111,7 @@ public class LogEntryService {
                     .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
 
             // 텍스트, 별점 업데이트
-            template.update(templateReq.getText(), templateReq.getRating());
+            template.update(templateReq.getText(), templateReq.getStar());
             updatedTemplates.add(template);
 
             // 기존 이미지 삭제 후 새 이미지 저장
@@ -163,22 +165,34 @@ public class LogEntryService {
         templateRepository.delete(template);
     }
 
-    /**
     @Transactional
-    public void savePlaceRating(PlaceRatingRequest request) {
+    public PlaceRatingResponse savePlaceRating(PlaceRatingRequest request) {
         // 장소 조회
         Place place = placeRepository.findById(request.getPlaceId())
                 .orElseThrow(() -> new SalgulokException(ErrorCode.PLACE_NOT_FOUND));
 
+        Integer given=request.getStar();
+        if(given==null||given<0||given>5){
+            throw new SalgulokException(ErrorCode.INVALID_REQUEST);
+        }
+
+        double currentAvg=place.getStar()!=null?place.getStar():0.0;
+        int currentCount=place.getStarCount()!=null?place.getStarCount():0;
         // 새 평점으로 평균 계산
-        double totalScore = place.getRating() * place.getRatingCount();
-        int newCount = place.getRatingCount() + 1;
-        double newAverage = (totalScore + request.getRating()) / newCount;
+        double totalScore = currentAvg*currentCount;
+        int newCount = currentCount+1;
+        double newAverage = (totalScore + given) / newCount;
+
+        //소수점 첫째자리 반올림
+        double roundedAvg= BigDecimal.valueOf(newAverage)
+                .setScale(1, RoundingMode.HALF_UP)
+                        .doubleValue();
 
         // 업데이트
-        place.updateRating(newAverage, newCount);
+        place.updateStar(newAverage, newCount);
+
+        return new PlaceRatingResponse(roundedAvg,newCount);
     }
-     */
 
     @Transactional
     public void saveSummary(Long entryId, String summary) {
