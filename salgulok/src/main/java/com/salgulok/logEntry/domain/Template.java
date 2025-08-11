@@ -32,21 +32,25 @@ public class Template {
     private String text;
 
     @Column(nullable = false)
-    private int rating;
+    private int star;
+
+    @Column(nullable=false)
+    private int starCount;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
-    public Template(LogEntry logEntry, Long placeId, String text, int rating) {
+    public Template(LogEntry logEntry, Long placeId, String text, int star) {
         this.logEntry = logEntry;
         this.placeId = placeId;
         this.text = text;
-        this.rating = rating;
+        this.star = star;
     }
 
-    public void update(String text, int rating) {
+    public void update(String text, int star) {
         this.text = text;
-        this.rating = rating;
+        this.star = star;
+        this.starCount =starCount;
     }
 
 }

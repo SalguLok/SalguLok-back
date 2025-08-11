@@ -9,7 +9,7 @@ import java.util.List;
 public class TemplateUpdateRequest {
     private Long templateId;
     private String text;
-    private int rating;
+    private int star;
     private List<String> imageUrls;
 
     // Getter, Setter
@@ -29,12 +29,12 @@ public class TemplateUpdateRequest {
         this.text = text;
     }
 
-    public int getRating() {
-        return rating;
+    public int getStar() {
+        return star;
     }
 
-    public void setRating(int rating) {
-        this.rating = rating;
+    public void setStar(int star) {
+        this.star = star;
     }
 
     public List<String> getImageUrls() {
