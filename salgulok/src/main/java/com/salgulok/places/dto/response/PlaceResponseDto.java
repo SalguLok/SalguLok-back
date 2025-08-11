@@ -22,6 +22,7 @@ public class PlaceResponseDto {
     private String tel;
     private String overview;
     private double star;
+    private int starCount;
 
     public static PlaceResponseDto from(Place place) {
         return PlaceResponseDto.builder()
@@ -36,6 +37,7 @@ public class PlaceResponseDto {
                 .tel(place.getTel())
                 .overview(place.getOverview())
                 .star(place.getStar() != null ? place.getStar() : 0.0)
+                .starCount(place.getStarCount()!=null?place.getStarCount():0)
                 .build();
     }
 }

@@ -6,15 +6,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PlaceRepository extends JpaRepository<Place, Long> {
+
+    Optional<Place> findByContentId(Long contentId);
+
     List<Place> findByPlaceNameContaining(String keyword);
 
     @Query("SELECT p FROM Place p ORDER BY p.star DESC")
     List<Place> findPopularPlaces();
 
-    @Query("SELECT p FROM Place p WHERE p.addr1 LIKE %:region% ORDER BY p.star DESC")
-    List<Place> findPopularPlacesByRegion(@Param("region") String region);
+    @Query("SELECT p FROM Place p WHERE p.addr1 = :addr1 ORDER BY p.star DESC")
+    List<Place> findPopularPlacesByRegion(@Param("addr1") String addr1);
 
     List<Place> findAll();
 
