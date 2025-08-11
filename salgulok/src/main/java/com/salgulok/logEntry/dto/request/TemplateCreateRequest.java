@@ -21,8 +21,8 @@ public class TemplateCreateRequest {
     private String text;
 
     /** 해당 장소에 대한 텍스트 기록 */
-    @NotNull(message = "rating은 필수입니다.")
-    private Integer rating;
+    @NotNull(message = "별점은 필수입니다.")
+    private Integer star;
 
     /** 해당 장소에 업로드된 이미지 URL 리스트 */
     private List<String> imageUrls;
