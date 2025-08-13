@@ -53,6 +53,26 @@ public class AuthService {
         return new LoginResponse(accessToken, isNewUser);
     }
 
+    public ReissueResponse reissue(String cookieRefreshToken, HttpServletResponse response) {
+        try {
+            // jwt 만료 체크 포함 -> 만료시 ExpiredJwtException 에러로 걸림
+            Long userId = Long.parseLong(jwtManager.getUserIdFromClaims(cookieRefreshToken));
+
+            // Redis의 refreshToken과 일치하는지 확인
+            String redisRefreshToken = refreshTokenService.getToken(userId);
+            if (redisRefreshToken == null || !redisRefreshToken.equals(cookieRefreshToken)) {
+                throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+            }
+
+            String accessToken = jwtManager.createAccessToken(userId);
+            return new ReissueResponse(accessToken);
+        } catch (ExpiredJwtException e) {
+            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
+    }
+
     private String createTokens(User user, HttpServletResponse response){
         String accessToken = jwtManager.createAccessToken(user.getUserId());
         String refreshToken = jwtManager.createRefreshToken(user.getUserId());
@@ -73,25 +93,5 @@ public class AuthService {
         refreshCookie.setMaxAge(jwtUtils.getRefreshTokenSeconds());
 
         return refreshCookie;
-    }
-
-    public ReissueResponse reissue(String cookieRefreshToken, HttpServletResponse response) {
-        try {
-            // jwt 만료 체크 포함 -> 만료시 ExpiredJwtException 에러로 걸림
-            Long userId = Long.parseLong(jwtManager.getUserIdFromClaims(cookieRefreshToken));
-
-            // Redis의 refreshToken과 일치하는지 확인
-            String redisRefreshToken = refreshTokenService.getToken(userId);
-            if (redisRefreshToken == null || !redisRefreshToken.equals(cookieRefreshToken)) {
-                throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
-            }
-
-            String accessToken = jwtManager.createAccessToken(userId);
-            return new ReissueResponse(accessToken);
-        } catch (ExpiredJwtException e) {
-            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_EXPIRED);
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
-        }
     }
 }
