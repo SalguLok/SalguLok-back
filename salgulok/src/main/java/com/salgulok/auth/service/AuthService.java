@@ -1,6 +1,7 @@
 package com.salgulok.auth.service;
 
 import com.salgulok.auth.dto.response.LoginResponse;
+import com.salgulok.auth.service.jwt.JwtUtils;
 import com.salgulok.user.domain.User;
 import com.salgulok.auth.dto.request.KakaoCodeRequest;
 import com.salgulok.auth.dto.response.JwtTokenResponse;
@@ -22,6 +23,7 @@ public class AuthService {
 
     private final KakaoService kakaoService;
     private final JwtManager jwtManager;
+    private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
 
@@ -50,7 +52,7 @@ public class AuthService {
         String accessToken = jwtManager.createAccessToken(user);
         String refreshToken = jwtManager.createRefreshToken(user);
 
-        refreshTokenService.save(user, refreshToken); // refresh token Redis에 저장
+        refreshTokenService.saveToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenExpiration()); // refresh token Redis에 저장
         return new JwtTokenResponse(accessToken, refreshToken);
     }
 }
