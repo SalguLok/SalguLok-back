@@ -17,12 +17,7 @@ import static lombok.AccessLevel.PROTECTED;
 public class RefreshToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
-    private User user;
+    private Long userId;
 
     @Column(nullable = false, length = 500)
     private String token;
@@ -31,7 +26,7 @@ public class RefreshToken {
 
     @Builder
     public RefreshToken(User user, String token, LocalDateTime expiryDate) {
-        this.user = user;
+        this.userId = user.getUserId();
         this.token = token;
         this.expiryDate = expiryDate;
     }
