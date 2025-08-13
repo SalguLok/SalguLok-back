@@ -27,9 +27,17 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ReissueResponse> reissue(@CookieValue("refreshToken") String refreshToken,
-                                        HttpServletResponse response){
+    public ResponseEntity<ReissueResponse> reissue(@CookieValue(value = "refreshToken", required = false) String refreshToken,
+                                                   HttpServletResponse response){
         ReissueResponse reissueResponse = authService.reissue(refreshToken, response);
         return ResponseEntity.ok().body(reissueResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String accessToken,
+                                       @AuthenticationPrincipal User user,
+                                       HttpServletResponse response){
+        authService.logout(user, accessToken, response);
+        return ResponseEntity.noContent().build();
     }
 }

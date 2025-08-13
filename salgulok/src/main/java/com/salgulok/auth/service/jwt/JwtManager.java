@@ -55,4 +55,15 @@ public class JwtManager {
                 .getBody();
         return claims.getSubject();
     }
+
+    // AccessToken 만료까지 남은 시간(ms) 계산
+    public long getExpiration(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(jwtUtils.getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        Date expiration = claims.getExpiration();
+        return expiration.getTime() - System.currentTimeMillis();
+    }
 }

@@ -10,7 +10,7 @@ import com.salgulok.auth.dto.request.KakaoCodeRequest;
 import com.salgulok.auth.dto.summary.KakaoUserInfo;
 import com.salgulok.user.repository.UserRepository;
 import com.salgulok.auth.service.jwt.JwtManager;
-import com.salgulok.auth.service.jwt.RefreshTokenService;
+import com.salgulok.auth.service.jwt.TokenService;
 import com.salgulok.auth.service.kakao.KakaoService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -29,7 +29,7 @@ public class AuthService {
     private final KakaoService kakaoService;
     private final JwtManager jwtManager;
     private final JwtUtils jwtUtils;
-    private final RefreshTokenService refreshTokenService;
+    private final TokenService tokenService;
     private final UserRepository userRepository;
 
     @Transactional
@@ -59,7 +59,7 @@ public class AuthService {
             Long userId = Long.parseLong(jwtManager.getUserIdFromClaims(cookieRefreshToken));
 
             // Redis의 refreshToken과 일치하는지 확인
-            String redisRefreshToken = refreshTokenService.getToken(userId);
+            String redisRefreshToken = tokenService.getToken(userId);
             if (redisRefreshToken == null || !redisRefreshToken.equals(cookieRefreshToken)) {
                 throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
             }
@@ -73,11 +73,24 @@ public class AuthService {
         }
     }
 
+    public void logout(User user, String accessToken, HttpServletResponse response) {
+        tokenService.deleteToken(user.getUserId());
+
+        accessToken = jwtManager.substringToken(accessToken);
+        long expireMillis = jwtManager.getExpiration(accessToken); // 남은 만료 시간(ms) redis TTL 설정
+        tokenService.saveBlacklist(accessToken, expireMillis);
+
+        // 저장된 쿠키 삭제
+        Cookie deleteCookie = createRefreshTokenCookie(null);
+        response.addCookie(deleteCookie);
+    }
+
+    // accessToken 및 refreshToken 생성
     private String createTokens(User user, HttpServletResponse response){
         String accessToken = jwtManager.createAccessToken(user.getUserId());
         String refreshToken = jwtManager.createRefreshToken(user.getUserId());
 
-        refreshTokenService.saveToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
+        tokenService.saveToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
 
         // 클라이언트 쿠키에 Refresh Token 저장
         response.addCookie(createRefreshTokenCookie(refreshToken));
@@ -85,6 +98,7 @@ public class AuthService {
         return accessToken;
     }
 
+    // refresh Token용 쿠키 설정
     private Cookie createRefreshTokenCookie(String refreshToken){
         Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
         refreshCookie.setHttpOnly(true);    // JS에서 접근 불가
