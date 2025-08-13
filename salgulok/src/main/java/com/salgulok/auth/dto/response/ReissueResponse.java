@@ -5,7 +5,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class LoginResponse {
+public class ReissueResponse {
     String accessToken;
-    boolean newUser;
 }

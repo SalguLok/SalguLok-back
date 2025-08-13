@@ -4,7 +4,6 @@ import com.salgulok.auth.service.principal.CustomUserDetails;
 import com.salgulok.auth.service.principal.CustomUserDetailsService;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -37,9 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String authorization = servletRequest.getHeader("Authorization");
             if(authorization != null){
                 String token = jwtManager.substringToken(authorization);
-                Claims claims = jwtManager.extractClaims(token);
-
-                String userId = claims.getSubject();
+                String userId = jwtManager.getUserIdFromClaims(token);
 
                 CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
 
