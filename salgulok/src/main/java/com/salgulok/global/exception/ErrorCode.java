@@ -14,6 +14,7 @@ public enum ErrorCode {
     KAKAO_LOGIN_ERROR(401, "카카오 로그인 인증에 실패했습니다."),
     REFRESH_TOKEN_INVALID(401, "리프레시 토큰 정보가 일치하지 않습니다."),
     REFRESH_TOKEN_EXPIRED(401, "리프레시 토큰이 만료되었습니다."),
+    ACCESS_TOKEN_IN_BLACKLIST(401, "잘못된 엑세스토큰입니다."),
     ACCESS_TOKEN_EMPTY(401, "엑세스 토큰이 존재하지 않습니다."),
     ACCESS_TOKEN_INVALID(401, "엑세스 토큰이 유효하지 않습니다."),
     ACCESS_TOKEN_EXPIRED(401, "엑세스 토큰이 만료됐습니다."),

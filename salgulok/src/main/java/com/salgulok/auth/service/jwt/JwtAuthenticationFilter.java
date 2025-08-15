@@ -26,6 +26,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtManager jwtManager;
+    private final TokenService tokenService;
     private final CustomUserDetailsService customUserDetailsService;
 
     @Override
@@ -35,8 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authorization = servletRequest.getHeader("Authorization");
             if(authorization != null){
-                String token = jwtManager.substringToken(authorization);
-                String userId = jwtManager.getUserIdFromClaims(token);
+                String accessToken = jwtManager.substringToken(authorization);
+
+                // 토큰이 블랙리스트에 있는지 확인
+                if(tokenService.isAccessTokenBlacklisted(accessToken)){
+                    throw new SalgulokException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST);
+                }
+
+                String userId = jwtManager.getUserIdFromClaims(accessToken);
 
                 CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
 
