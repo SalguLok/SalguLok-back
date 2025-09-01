@@ -40,7 +40,10 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux' //webClient webflux 관련 의존성 추가
 	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64' //netty time out 해결 위한 의존성 추가
-
+	// AWS SDK S3
+	implementation 'software.amazon.awssdk:s3:2.25.69'
+	implementation 'software.amazon.awssdk:auth:2.25.69'
+	implementation 'software.amazon.awssdk:regions:2.25.69'
 }
 
 
