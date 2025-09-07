@@ -5,6 +5,7 @@ import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.summary.LogSummary;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +51,33 @@ public class LogService {
         Region updateRegion = findByRegionId(request.getRegionId());
         Log updateLog = log.updateLog(request, updateRegion);
         return LogSummary.from(updateLog);
+    }
+
+    @Transactional(readOnly = true)
+    public LogListResponse getMyLog(User user) {
+        List<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user);
+        return new LogListResponse(logs.stream()
+                .map(LogSummary::from)
+                .collect(Collectors.toList()));
+        //TODO: return하는 함수 중복. 리팩터링 필요
+    }
+
+    @Transactional(readOnly = true)
+    public LogListResponse getLogByRegion(Long id) {
+        Region region = findByRegionId(id);
+        List<Log> logs = logRepository.findByRegion(region);
+        return new LogListResponse(logs.stream()
+                .map(LogSummary::from)
+                .collect(Collectors.toList()));
+    }
+
+    // TODO: 페이징 필요
+    @Transactional(readOnly = true)
+    public LogListResponse getLogBySearch(String search) {
+        List<Log> logs = logRepository.findByTitleContaining(search);
+        return new LogListResponse(logs.stream()
+                .map(LogSummary::from)
+                .collect(Collectors.toList()));
     }
 
     private void authorizeUser(User user, Log log){
