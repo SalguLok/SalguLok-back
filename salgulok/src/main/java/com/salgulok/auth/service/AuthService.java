@@ -34,8 +34,8 @@ public class AuthService {
 
     @Transactional
     public LoginResponse kakaoLoginOrSignUp(KakaoCodeRequest request, HttpServletResponse response){
-        String kakaoAccessToken = request.getCode();
-        KakaoUserInfo userInfo = kakaoService.getKakaoIdFromAccessToken(kakaoAccessToken);
+        String authorizationCode = request.getCode();
+        KakaoUserInfo userInfo = kakaoService.getUserInfoFromAccessToken(authorizationCode);
 
         Long kakaoId = userInfo.getKakaoId();
         User user = userRepository.findByKakaoId(kakaoId).orElse(null);
@@ -50,7 +50,7 @@ public class AuthService {
         }
 
         String accessToken = createTokens(user, response);
-        return new LoginResponse(accessToken, isNewUser);
+        return new LoginResponse(accessToken, isNewUser, user.getUserId());
     }
 
     public ReissueResponse reissue(String cookieRefreshToken, HttpServletResponse response) {
