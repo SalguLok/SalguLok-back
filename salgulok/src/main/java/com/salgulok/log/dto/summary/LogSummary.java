@@ -1,4 +1,4 @@
-package com.salgulok.log.dto.response;
+package com.salgulok.log.dto.summary;
 
 import com.salgulok.log.domain.Log;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Builder
 @Getter
-public class LogResponse {
+public class LogSummary {
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -17,8 +17,8 @@ public class LogResponse {
     private String imgUrl;
     private String oneReview;
 
-    public static LogResponse from(Log log){
-        return LogResponse.builder()
+    public static LogSummary from(Log log){
+        return LogSummary.builder()
                 .title(log.getTitle())
                 .startDate(log.getStartDate())
                 .endDate(log.getEndDate())
