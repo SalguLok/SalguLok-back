@@ -29,3 +29,7 @@ kakao:
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
+
+tourapi:
+  url: ${TOUR_API_URL}
+  key: ${TOUR_API_KEY}
