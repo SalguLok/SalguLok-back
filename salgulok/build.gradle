@@ -38,7 +38,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux' //webClient webflux 관련 의존성 추가
+	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.123.Final:osx-aarch_64' //netty time out 해결 위한 의존성 추가
+
 }
+
 
 tasks.named('test') {
 	useJUnitPlatform()
