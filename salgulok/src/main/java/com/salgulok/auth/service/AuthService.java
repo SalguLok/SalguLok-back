@@ -102,7 +102,7 @@ public class AuthService {
     private Cookie createRefreshTokenCookie(String refreshToken){
         Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
         refreshCookie.setHttpOnly(true);    // JS에서 접근 불가
-        refreshCookie.setSecure(true);      // HTTPS 전용
+        refreshCookie.setSecure(false);      // HTTPS 전용
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(jwtUtils.getRefreshTokenSeconds());
 
