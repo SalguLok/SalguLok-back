@@ -80,4 +80,9 @@ public class Log {
         this.oneReview = request.getOneReview();
         return this;
     }
+
+    public void increaseView() {
+        this.view += 1;
+    }
+
 }

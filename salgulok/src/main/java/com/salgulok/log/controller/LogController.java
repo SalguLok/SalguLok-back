@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/logs")
@@ -40,4 +41,38 @@ public class LogController {
         LogResponse response = logService.updateLog(user, logId, request);
         return ResponseEntity.ok(response);
     }
+
+    // 전체 공개 살구록 리스트
+    @GetMapping("/public")
+    public ResponseEntity<List<LogResponse>> getPublicLogs() {
+        return ResponseEntity.ok(logService.getPublicLogs());
+    }
+
+    // 내 살구록 리스트
+    @GetMapping("/me")
+    public ResponseEntity<List<LogResponse>> getMyLogs(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId()));
+    }
+
+    // 특정 유저 살구록 리스트
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<List<LogResponse>> getUserLogs(@PathVariable Long userId) {
+        return ResponseEntity.ok(logService.getLogsByUser(userId));
+    }
+
+    // 특정 살구록 상세 조회 : 제목, 한줄평, 여행 시작일 및 종료일, 공개 여부, 여행 지역 ID, 대표 이미지 URL 모두 포함
+    @GetMapping("/{logId}")
+    public ResponseEntity<LogResponse> getLogDetail(@AuthenticationPrincipal User user,
+                                                    @PathVariable Long logId) {
+        return ResponseEntity.ok(logService.getLogDetail(logId, user));
+    }
+
+    // 조회수 증가
+    @PostMapping("/{logId}/views")
+    public ResponseEntity<Void> increaseView(@AuthenticationPrincipal User user,
+                                             @PathVariable Long logId) {
+        logService.increaseViewCount(logId, user);
+        return ResponseEntity.ok().build();
+    }
+
 }
