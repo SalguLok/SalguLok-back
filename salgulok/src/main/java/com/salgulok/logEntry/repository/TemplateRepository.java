@@ -15,4 +15,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     // 하루 기록에 포함된 모든 템플릿 조회
     List<Template> findAllByLogEntry(LogEntry logEntry);
+
+    List<Template> findAllByLogEntry_LogEntryId(Long logEntryId);
+    int countByLogEntry_LogEntryId(Long logEntryId);
 }
