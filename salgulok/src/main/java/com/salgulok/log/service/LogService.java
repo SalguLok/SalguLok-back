@@ -5,7 +5,7 @@ import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.summary.LogSummary;
+import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
@@ -43,13 +43,13 @@ public class LogService {
     }
 
     @Transactional
-    public LogSummary updateLog(User user, Long logId, LogUpdateRequest request) {
+    public LogResponse updateLog(User user, Long logId, LogUpdateRequest request) {
         Log log = findByLogId(logId);
         authorizeUser(user, log);
 
         Region updateRegion = findByRegionId(request.getRegionId());
         Log updateLog = log.updateLog(request, updateRegion);
-        return LogSummary.from(updateLog);
+        return LogResponse.from(updateLog);
     }
 
     private void authorizeUser(User user, Log log) {
