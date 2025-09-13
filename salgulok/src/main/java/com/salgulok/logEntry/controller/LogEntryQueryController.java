@@ -49,4 +49,13 @@ public class LogEntryQueryController {
     ) {
         return ResponseEntity.ok(logEntryService.getFillCalendar(logId, start, end));
     }
+
+    @GetMapping("/{entryId}/summary")
+    public ResponseEntity<String> getSummary(
+            @PathVariable Long logId,
+            @PathVariable Long entryId
+    ) {
+        String summary = logEntryService.getSummary(logId, entryId);
+        return ResponseEntity.ok(summary);
+    }
 }
