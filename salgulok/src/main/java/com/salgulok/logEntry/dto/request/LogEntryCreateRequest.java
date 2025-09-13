@@ -17,9 +17,9 @@ import java.util.List;
 
 public class LogEntryCreateRequest {
 
-    /** 연관된 한 달 살구록 ID */
-    @NotNull(message = "logId는 필수입니다.")
-    private Long logId;
+//    /** 연관된 한 달 살구록 ID */
+//    @NotNull(message = "logId는 필수입니다.")
+//    private Long logId;
 
     /** 하루 기록 날짜 */
     @NotNull(message = "entryDate는 필수입니다.")

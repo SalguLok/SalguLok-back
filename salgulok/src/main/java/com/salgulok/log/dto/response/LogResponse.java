@@ -9,6 +9,7 @@ import java.time.LocalDate;
 @Builder
 @Getter
 public class LogResponse {
+    private Long logId;
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -19,6 +20,7 @@ public class LogResponse {
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
+                .logId(log.getLogId())
                 .title(log.getTitle())
                 .startDate(log.getStartDate())
                 .endDate(log.getEndDate())
