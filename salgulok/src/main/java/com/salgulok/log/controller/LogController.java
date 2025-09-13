@@ -2,6 +2,7 @@ package com.salgulok.log.controller;
 
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.response.LogCreateResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
@@ -20,12 +21,24 @@ import java.util.List;
 public class LogController {
     private final LogService logService;
 
+//    @PostMapping
+//    public ResponseEntity<Void> createLog(@AuthenticationPrincipal User user,
+//                                          @Valid @RequestBody LogCreateRequest request){
+//        Long logId = logService.createLog(user, request);
+//        return ResponseEntity.created(URI.create("/logs/"+logId)).build();
+//    }
+
     @PostMapping
-    public ResponseEntity<Void> createLog(@AuthenticationPrincipal User user,
-                                          @Valid @RequestBody LogCreateRequest request){
+
+    public ResponseEntity<LogCreateResponse> createLog(@AuthenticationPrincipal User user,
+                                                   @Valid @RequestBody LogCreateRequest request) {
         Long logId = logService.createLog(user, request);
-        return ResponseEntity.created(URI.create("/logs/"+logId)).build();
+        String location = "/logs/" + logId;
+        return ResponseEntity
+            .created(URI.create(location))
+            .body(new LogCreateResponse(logId, location));
     }
+
 
     @DeleteMapping("/{logId}")
     public ResponseEntity<Void> deleteLog(@AuthenticationPrincipal User user,

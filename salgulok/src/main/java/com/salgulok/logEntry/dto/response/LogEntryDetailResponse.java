@@ -20,7 +20,7 @@ public class LogEntryDetailResponse {
         private Long templateId;
         private Long placeId;
         private String text;
-        private Integer rating;
+        private Integer star;
         private List<ImageSummary> images;
     }
 
