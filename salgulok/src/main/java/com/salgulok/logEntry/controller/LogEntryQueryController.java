@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.salgulok.logEntry.dto.response.FillCalendarResponse;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import static org.springframework.format.annotation.DateTimeFormat.ISO;
 import java.time.LocalDate;
 
 @RestController
@@ -36,5 +39,14 @@ public class LogEntryQueryController {
     @GetMapping("/dates")
     public ResponseEntity<LogEntryDateListResponse> getEntryDates(@PathVariable Long logId) {
         return ResponseEntity.ok(logEntryService.getEntryDatesWithThumbnail(logId));
+    }
+
+    @GetMapping("/fill-states")
+    public ResponseEntity<FillCalendarResponse> getFillStates(
+            @PathVariable Long logId,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate start,
+            @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate end
+    ) {
+        return ResponseEntity.ok(logEntryService.getFillCalendar(logId, start, end));
     }
 }

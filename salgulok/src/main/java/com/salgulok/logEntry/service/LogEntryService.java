@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.Collections;
+import com.salgulok.logEntry.dto.response.DayFillState;
+import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 
 /**
  * 하루 기록(LogEntry), 템플릿(Template), 이미지(TemplateImage)를 저장하는 서비스
@@ -294,6 +296,40 @@ public class LogEntryService {
                 .templateCount(tSummaries.size())
                 .templates(tSummaries)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public FillCalendarResponse getFillCalendar(Long logId, LocalDate start, LocalDate end) {
+        // 1) 살구록 조회 및 기간 기본값
+        Log log = logRepository.findById(logId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        LocalDate s = (start != null) ? start : log.getStartDate();
+        LocalDate e = (end   != null) ? end   : log.getEndDate();
+
+        if (s == null || e == null || s.isAfter(e)) {
+            throw new SalgulokException(ErrorCode.INVALID_DATE_RANGE);
+        }
+
+        // 2) 기간 내 엔트리 조회 → date -> entryId 매핑
+        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdAndEntryDateBetween(logId, s, e);
+        var dateToEntryId = entries.stream()
+                .collect(Collectors.toMap(LogEntry::getEntryDate, LogEntry::getLogEntryId, (a, b) -> a));
+
+        // 3) 모든 날짜 loop 돌며 hasTemplate 계산
+        List<DayFillState> days = new ArrayList<>();
+        for (LocalDate d = s; !d.isAfter(e); d = d.plusDays(1)) {
+            Long entryId = dateToEntryId.get(d);
+            boolean hasTemplate = false;
+            if (entryId != null) {
+                // “엔트리는 템플릿 없이도 생성 가능” 정책 → 템플릿 개수로 판별
+                int cnt = templateRepository.countByLogEntry_LogEntryId(entryId);
+                hasTemplate = cnt > 0;
+            }
+            days.add(new DayFillState(d, hasTemplate));
+        }
+
+        return new FillCalendarResponse(logId, s, e, days);
     }
 
 }
