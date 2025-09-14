@@ -48,7 +48,7 @@ public class AuthService {
                     .kakaoId(kakaoId)
                     .build());
         } else {
-            if (user.getUsername() == null){
+            if (user.getUsername() == null || user.getUsername().isEmpty()){
                 isNewUser = true;
             }
         }
