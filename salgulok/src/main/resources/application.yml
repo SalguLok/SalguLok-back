@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: salgulok
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
+  token-uri: https://kauth.kakao.com/oauth/token
+  user-info-uri: https://kapi.kakao.com/v2/user/me
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+
+tourapi:
+  url: ${TOUR_API_URL}
+  key: ${TOUR_API_KEY}
+
+cloud:
+  aws:
+    region: ${AWS_REGION:ap-northeast-2}   # 기본값 서울, 없으면 ap-northeast-2
+    s3:
+      bucket: ${AWS_S3_BUCKET}             # 버킷 이름 환경변수에서 주입
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
