@@ -4,6 +4,7 @@ import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.dto.request.LogCreateRequest;
+import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.repository.LogRepository;
