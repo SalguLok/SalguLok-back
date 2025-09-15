@@ -15,11 +15,11 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     // 회원별 로그 조회
     List<Log> findByUserOrderByCreatedAtDesc(User user);
 
-    // 지역별 로그 조회
-    List<Log> findByRegion(Region region);
+    // 지역별 로그 조회 (공개 로그만)
+    List<Log> findByRegionAndIsPublicTrue(Region region);
 
-    // 로그 검색
-    List<Log> findByTitleContaining(String search);
+    // 로그 검색 (공개 로그만)
+    List<Log> findByTitleContainingAndIsPublicTrue(String search);
   
     // 전체 공개 살구록 리스트
     List<Log> findByIsPublicTrue();

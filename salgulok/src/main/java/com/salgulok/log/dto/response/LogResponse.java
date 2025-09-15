@@ -1,6 +1,7 @@
 package com.salgulok.log.dto.response;
 
 import com.salgulok.log.domain.Log;
+import com.salgulok.user.domain.User;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,6 +10,8 @@ import java.time.LocalDate;
 @Builder
 @Getter
 public class LogResponse {
+    private String writer;
+    private String writerProfile;
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -19,6 +22,8 @@ public class LogResponse {
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
+                .writer(log.getUser().getUsername())
+                .writerProfile(log.getUser().getProfileImg())
                 .title(log.getTitle())
                 .startDate(log.getStartDate())
                 .endDate(log.getEndDate())

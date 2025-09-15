@@ -65,7 +65,7 @@ public class LogService {
     @Transactional(readOnly = true)
     public LogListResponse getLogByRegion(Long id) {
         Region region = findByRegionId(id);
-        List<Log> logs = logRepository.findByRegion(region);
+        List<Log> logs = logRepository.findByRegionAndIsPublicTrue(region);
         return new LogListResponse(logs.stream()
                 .map(LogResponse::from)
                 .collect(Collectors.toList()));
@@ -74,7 +74,7 @@ public class LogService {
     // TODO: 페이징 필요
     @Transactional(readOnly = true)
     public LogListResponse getLogBySearch(String search) {
-        List<Log> logs = logRepository.findByTitleContaining(search);
+        List<Log> logs = logRepository.findByTitleContainingAndIsPublicTrue(search);
         return new LogListResponse(logs.stream()
                 .map(LogResponse::from)
                 .collect(Collectors.toList()));
