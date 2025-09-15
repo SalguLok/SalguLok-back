@@ -40,4 +40,9 @@ public class AuthController {
         authService.logout(user, accessToken, response);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test(){
+        return ResponseEntity.ok().body("hello");
+    }
 }

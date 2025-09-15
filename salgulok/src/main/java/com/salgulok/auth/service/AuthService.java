@@ -47,6 +47,10 @@ public class AuthService {
             user = userRepository.save(User.builder()
                     .kakaoId(kakaoId)
                     .build());
+        } else {
+            if (user.getUsername() == null || user.getUsername().isEmpty()){
+                isNewUser = true;
+            }
         }
 
         String accessToken = createTokens(user, response);
