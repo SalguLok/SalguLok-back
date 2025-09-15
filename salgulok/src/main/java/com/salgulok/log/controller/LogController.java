@@ -3,7 +3,7 @@ package com.salgulok.log.controller;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.response.LogListResponse;
-import com.salgulok.log.dto.summary.LogSummary;
+import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
 import jakarta.validation.Valid;
@@ -35,10 +35,10 @@ public class LogController {
     }
 
     @PatchMapping("/{logId}")
-    public ResponseEntity<LogSummary> updateLog(@AuthenticationPrincipal User user,
-                                                @PathVariable Long logId,
-                                                @Valid @RequestBody LogUpdateRequest request){
-        LogSummary response = logService.updateLog(user, logId, request);
+    public ResponseEntity<LogResponse> updateLog(@AuthenticationPrincipal User user,
+                                                 @PathVariable Long logId,
+                                                 @Valid @RequestBody LogUpdateRequest request){
+        LogResponse response = logService.updateLog(user, logId, request);
         return ResponseEntity.ok(response);
     }
 

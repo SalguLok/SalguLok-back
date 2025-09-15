@@ -6,7 +6,7 @@ import com.salgulok.log.domain.Log;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.response.LogListResponse;
-import com.salgulok.log.dto.summary.LogSummary;
+import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
@@ -44,20 +44,20 @@ public class LogService {
     }
 
     @Transactional
-    public LogSummary updateLog(User user, Long logId, LogUpdateRequest request) {
+    public LogResponse updateLog(User user, Long logId, LogUpdateRequest request) {
         Log log = findByLogId(logId);
         authorizeUser(user, log);
 
         Region updateRegion = findByRegionId(request.getRegionId());
         Log updateLog = log.updateLog(request, updateRegion);
-        return LogSummary.from(updateLog);
+        return LogResponse.from(updateLog);
     }
 
     @Transactional(readOnly = true)
     public LogListResponse getMyLog(User user) {
         List<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user);
         return new LogListResponse(logs.stream()
-                .map(LogSummary::from)
+                .map(LogResponse::from)
                 .collect(Collectors.toList()));
         //TODO: return하는 함수 중복. 리팩터링 필요
     }
@@ -67,7 +67,7 @@ public class LogService {
         Region region = findByRegionId(id);
         List<Log> logs = logRepository.findByRegion(region);
         return new LogListResponse(logs.stream()
-                .map(LogSummary::from)
+                .map(LogResponse::from)
                 .collect(Collectors.toList()));
     }
 
@@ -76,7 +76,7 @@ public class LogService {
     public LogListResponse getLogBySearch(String search) {
         List<Log> logs = logRepository.findByTitleContaining(search);
         return new LogListResponse(logs.stream()
-                .map(LogSummary::from)
+                .map(LogResponse::from)
                 .collect(Collectors.toList()));
     }
 
