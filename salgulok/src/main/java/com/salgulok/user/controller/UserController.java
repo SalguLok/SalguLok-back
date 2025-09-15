@@ -3,6 +3,7 @@ package com.salgulok.user.controller;
 import com.salgulok.user.domain.User;
 import com.salgulok.user.dto.request.UserInfoRequest;
 import com.salgulok.user.dto.request.NicknameRequest;
+import com.salgulok.user.dto.response.IsTravelingResponse;
 import com.salgulok.user.dto.response.UserResponse;
 import com.salgulok.user.dto.response.UsernameDuplicateResponse;
 import com.salgulok.user.service.UserService;
@@ -39,6 +40,12 @@ public class UserController {
     @PostMapping("/duplicate")
     public ResponseEntity<UsernameDuplicateResponse> checkUsernameDuplicate(@Valid @RequestBody NicknameRequest request){
         UsernameDuplicateResponse response = userService.checkUsernameDuplicate(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/isTraveling")
+    public ResponseEntity<IsTravelingResponse> checkIfIsTraveling(@AuthenticationPrincipal User user){
+        IsTravelingResponse response = userService.checkIfTraveling(user);
         return ResponseEntity.ok(response);
     }
 }

@@ -5,6 +5,7 @@ import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.user.domain.User;
 import com.salgulok.user.dto.request.UserInfoRequest;
 import com.salgulok.user.dto.request.NicknameRequest;
+import com.salgulok.user.dto.response.IsTravelingResponse;
 import com.salgulok.user.dto.response.UserResponse;
 import com.salgulok.user.dto.response.UsernameDuplicateResponse;
 import com.salgulok.user.repository.UserRepository;
@@ -45,6 +46,12 @@ public class UserService {
     public UsernameDuplicateResponse checkUsernameDuplicate(NicknameRequest request) {
         boolean isDuplicate = userRepository.existsByUsername(request.getUsername());
         return new UsernameDuplicateResponse(isDuplicate);
+    }
+
+    @Transactional(readOnly = true)
+    public IsTravelingResponse checkIfTraveling(User user) {
+        Long regionId = user.getRegion() != null ? user.getRegion().getRegionId() : null;
+        return new IsTravelingResponse(user.getIsTraveling(), regionId);
     }
 
     private User findByUserId(Long userId){

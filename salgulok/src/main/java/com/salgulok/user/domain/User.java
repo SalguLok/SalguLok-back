@@ -60,4 +60,14 @@ public class User {
         this.intro = intro;
         this.profileImg = profileImg;
     }
+
+    public void startTravel(Region region) {
+        this.region = region;
+        this.isTraveling = true;
+    }
+
+    public void endTravel() {
+        this.region = null;
+        this.isTraveling = false;
+    }
 }
