@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @Builder
 @Getter
 public class LogResponse {
+    private Long logId;
     private String writer;
     private String writerProfile;
     private String title;
@@ -22,6 +23,7 @@ public class LogResponse {
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
+                .logId(log.getLogId())
                 .writer(log.getUser().getUsername())
                 .writerProfile(log.getUser().getProfileImg())
                 .title(log.getTitle())
