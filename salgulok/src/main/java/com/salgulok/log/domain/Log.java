@@ -1,6 +1,7 @@
 package com.salgulok.log.domain;
 
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.logEntry.domain.LogEntry;
 import com.salgulok.region.domain.Region;
 import com.salgulok.user.domain.User;
 import jakarta.persistence.*;
@@ -12,6 +13,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -33,6 +36,9 @@ public class Log {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "regionId", nullable = false)
     private Region region;
+
+    @OneToMany(mappedBy = "log", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<LogEntry> logEntries = new ArrayList<>();
 
     @Column(nullable = false)
     private String title;
@@ -80,4 +86,9 @@ public class Log {
         this.oneReview = request.getOneReview();
         return this;
     }
+
+    public void increaseView() {
+        this.view += 1;
+    }
+
 }

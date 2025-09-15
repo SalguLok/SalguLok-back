@@ -1,0 +1,61 @@
+package com.salgulok.logEntry.domain;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import static lombok.AccessLevel.PROTECTED;
+
+@Entity
+@Getter
+@Table(name = "templates")
+@EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor(access = PROTECTED)
+public class Template {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long templateId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "log_entry_id", nullable = false)
+    private LogEntry logEntry;
+
+    @OneToMany(mappedBy = "template", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<TemplateImage> templateImages = new ArrayList<>();
+
+    @Column(nullable = false)
+    private Long placeId;
+
+    @Lob
+    private String text;
+
+    @Column(nullable = false)
+    private int star;
+
+    @Column(nullable=false)
+    private int starCount;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    public Template(LogEntry logEntry, Long placeId, String text, int star) {
+        this.logEntry = logEntry;
+        this.placeId = placeId;
+        this.text = text;
+        this.star = star;
+    }
+
+    public void update(String text, int star) {
+        this.text = text;
+        this.star = star;
+        this.starCount =starCount;
+    }
+
+}
