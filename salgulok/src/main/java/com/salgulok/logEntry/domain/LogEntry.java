@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -26,6 +28,9 @@ public class LogEntry {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "log_id", nullable = false)
     private Log log;
+
+    @OneToMany(mappedBy = "logEntry", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Template> templates = new ArrayList<>();
 
     @Column(nullable = false)
     private LocalDate entryDate;
