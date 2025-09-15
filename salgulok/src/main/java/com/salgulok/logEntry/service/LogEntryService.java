@@ -150,32 +150,6 @@ public class LogEntryService {
         return mapToDetail(entry, templates);
     }
 
-    @Transactional(readOnly = true)
-    public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
-        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdOrderByEntryDateAsc(logId);
-
-        List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
-            int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
-
-            String thumbnail = templateImageRepository
-                    .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
-                    .map(TemplateImage::getImageUrl)
-                    .orElse(null);
-
-            return LogEntryDateListResponse.Item.builder()
-                    .entryId(e.getLogEntryId())
-                    .entryDate(e.getEntryDate())
-                    .thumbnailUrl(thumbnail)
-                    .templateCount(tCount)
-                    .build();
-        }).toList();
-
-        return LogEntryDateListResponse.builder()
-                .logId(logId)
-                .items(items)
-                .build();
-    }
-
     private LogEntryDetailResponse mapToDetail(LogEntry entry, List<Template> templates) {
         List<LogEntryDetailResponse.TemplateSummary> tSummaries = templates.stream().map(t -> {
             List<TemplateImage> imgs =
@@ -246,36 +220,6 @@ public class LogEntryService {
         }
     }
 
-    // === 조회: 특정 날짜 (엔트리 없으면 빈 응답) ===
-    @Transactional(readOnly = true)
-    public LogEntryDetailResponse getEntryByDateNullable(Long logId, LocalDate date) {
-        return logEntryRepository.findByLog_LogIdAndEntryDate(logId, date)
-                .map(entry -> {
-                    List<Template> templates =
-                            templateRepository.findAllByLogEntry_LogEntryId(entry.getLogEntryId());
-                    return mapToDetail(entry, templates);
-                })
-                .orElseGet(() -> LogEntryDetailResponse.builder()
-                        .logId(logId)
-                        .entryDate(date)
-                        .entryId(null)
-                        .templateCount(0)
-                        .templates(Collections.emptyList())
-                        .build());
-    }
-
-    // === 조회: entryId 단건 상세 ===
-    @Transactional(readOnly = true)
-    public LogEntryDetailResponse getEntryDetail(Long entryId) {
-        LogEntry entry = logEntryRepository.findById(entryId)
-                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
-
-        List<Template> templates =
-                templateRepository.findAllByLogEntry_LogEntryId(entry.getLogEntryId());
-
-        return mapToDetail(entry, templates);
-    }
-
     // === 조회: 날짜 칩 리스트(날짜 + 대표 이미지 1장) ===
     @Transactional(readOnly = true)
     public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
@@ -303,34 +247,4 @@ public class LogEntryService {
                 .build();
     }
 
-    // === 내부 매퍼: 상세 응답 변환 ===
-    private LogEntryDetailResponse mapToDetail(LogEntry entry, List<Template> templates) {
-        List<LogEntryDetailResponse.TemplateSummary> tSummaries = templates.stream().map(t -> {
-            List<TemplateImage> imgs =
-                    templateImageRepository.findAllByTemplate_TemplateId(t.getTemplateId());
-
-            return LogEntryDetailResponse.TemplateSummary.builder()
-                    .templateId(t.getTemplateId())
-                    .placeId(t.getPlaceId())
-                    .text(t.getText())
-                    .rating(t.getStar())
-                    .images(imgs.stream().map(i ->
-                            LogEntryDetailResponse.ImageSummary.builder()
-                                    .imageId(i.getTemplateImageId())
-                                    .imageUrl(i.getImageUrl())
-                                    .build()
-                    ).toList())
-                    .build();
-        }).toList();
-
-        return LogEntryDetailResponse.builder()
-                .logId(entry.getLog().getLogId())
-                .entryDate(entry.getEntryDate())
-                .entryId(entry.getLogEntryId())
-                .templateCount(tSummaries.size())
-                .templates(tSummaries)
-                .build();
-    }
-
 }
-
