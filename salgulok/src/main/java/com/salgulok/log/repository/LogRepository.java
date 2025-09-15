@@ -9,8 +9,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-import java.util.List;
-
 public interface LogRepository extends JpaRepository<Log, Long> {
     // 회원별 로그 조회
     List<Log> findByUserOrderByCreatedAtDesc(User user);

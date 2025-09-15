@@ -18,4 +18,5 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     List<Template> findAllByLogEntry_LogEntryId(Long logEntryId);
     int countByLogEntry_LogEntryId(Long logEntryId);
+
 }

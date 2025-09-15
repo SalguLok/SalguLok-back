@@ -13,7 +13,6 @@ import java.util.Optional;
  */
 public interface TemplateImageRepository extends JpaRepository<TemplateImage, Long> {
 
-
     List<TemplateImage> findAllByTemplate_TemplateId(Long templateId);
 
     // 해당 날짜(entry)의 이미지 중 가장 먼저 등록된 1장

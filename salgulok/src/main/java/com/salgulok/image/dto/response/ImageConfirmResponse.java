@@ -12,4 +12,6 @@ import java.util.List;
 public class ImageConfirmResponse {
     // DB에 생성된 이미지 PK들 (예: TemplateImage의 ID)
     private List<Long> imageIds;
+
 }
+

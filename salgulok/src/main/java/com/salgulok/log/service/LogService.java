@@ -80,6 +80,7 @@ public class LogService {
                 .collect(Collectors.toList()));
     }
 
+
     private void authorizeUser(User user, Log log) {
         if (!user.getUserId().equals(log.getUser().getUserId())) {
             throw new SalgulokException(ErrorCode.OWNER_MISMATCH);
@@ -134,4 +135,6 @@ public class LogService {
             log.increaseView();
         }
     }
+
 }
+
