@@ -29,4 +29,6 @@ public class LogEntryDetailResponse {
         private Long imageId;
         private String imageUrl;
     }
+
 }
+
