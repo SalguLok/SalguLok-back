@@ -33,7 +33,7 @@ public class UserService {
 
     @Transactional
     public UserResponse createUserInfo(User user, UserInfoRequest request) {
-        if(user.getIntro() != null || user.getProfileImg() != null || user.getUsername() != null){
+        if(user.getUsername() != null && user.getUsername().isEmpty()){
             throw new SalgulokException(ErrorCode.USER_INFO_EXIST);
         }
         User findUser = findByUserId(user.getUserId());
