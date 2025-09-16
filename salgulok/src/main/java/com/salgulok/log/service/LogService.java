@@ -124,5 +124,14 @@ public class LogService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<LogResponse> getPopularLogs() {
+        return logRepository.findByIsPublicTrueOrderByLikesDesc()
+                .stream()
+                .map(LogResponse::from)
+                .toList();
+    }
+
+
 
 }
