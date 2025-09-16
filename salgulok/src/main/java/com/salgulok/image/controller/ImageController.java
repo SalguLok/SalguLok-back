@@ -45,4 +45,6 @@ public class ImageController {
         imageService.deleteImage(user, imageId);
         return ResponseEntity.noContent().build();
     }
+
 }
+

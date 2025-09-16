@@ -48,4 +48,5 @@ public class ImageServiceImpl implements ImageService {
     public void deleteImage(User user, Long imageId) {
         // TODO: 소유자 검증 -> S3 객체 삭제 -> 레코드 삭제
     }
+
 }
