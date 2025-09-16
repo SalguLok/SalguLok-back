@@ -17,6 +17,7 @@ public class LogResponse {
     private Long regionId;
     private String imgUrl;
     private String oneReview;
+    private Long likes;
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
@@ -28,6 +29,7 @@ public class LogResponse {
                 .regionId(log.getRegion().getRegionId())
                 .imgUrl(log.getImgUrl())
                 .oneReview(log.getOneReview())
+                .likes(log.getLikes())
                 .build();
     }
 }

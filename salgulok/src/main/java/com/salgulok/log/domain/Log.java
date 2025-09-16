@@ -62,6 +62,9 @@ public class Log {
     @Column(nullable = false)
     private Boolean isPublic;
 
+    @Column(nullable = false)
+    private Long likes = 0L;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -89,6 +92,16 @@ public class Log {
 
     public void increaseView() {
         this.view += 1;
+    }
+
+    public void increaseLikes() {
+        this.likes += 1;
+    }
+
+    public void decreaseLikes() {
+        if (this.likes > 0) {
+            this.likes -= 1;
+        }
     }
 
 }
