@@ -106,4 +106,23 @@ public class LogService {
             log.increaseView();
         }
     }
+
+    @Transactional
+    public void increaseLikeCount(Long logId, User user) {
+        Log log = findByLogId(logId);
+        // 본인이 누를 수 없는 제약
+        if (!log.getUser().getUserId().equals(user.getUserId())) {
+            log.increaseLikes();
+        }
+    }
+
+    @Transactional
+    public void decreaseLikeCount(Long logId, User user) {
+        Log log = findByLogId(logId);
+        if (!log.getUser().getUserId().equals(user.getUserId())) {
+            log.decreaseLikes();
+        }
+    }
+
+
 }

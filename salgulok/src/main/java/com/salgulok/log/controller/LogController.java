@@ -88,4 +88,19 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    // 좋아요 로직
+    @PostMapping("/{logId}/likes")
+    public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,
+                                             @PathVariable Long logId) {
+        logService.increaseLikeCount(logId, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{logId}/likes")
+    public ResponseEntity<Void> decreaseLike(@AuthenticationPrincipal User user,
+                                             @PathVariable Long logId) {
+        logService.decreaseLikeCount(logId, user);
+        return ResponseEntity.ok().build();
+    }
+
 }
