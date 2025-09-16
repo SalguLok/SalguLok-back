@@ -42,4 +42,16 @@ public interface LogRepository extends JpaRepository<Log, Long> {
 
 
     // 내 살구록 리스트 (컨트롤러 단에서 userId 주입하면 위 메서드 재사용)
+
+    // 특정 장소가 포함된 살구록 목록(최신순)
+    @Query("""
+       SELECT DISTINCT l
+       FROM Template t
+       JOIN t.logEntry le
+       JOIN le.log l
+       WHERE t.placeId = :placeId
+         AND l.isPublic = true
+       ORDER BY l.createdAt DESC
+       """)
+    List<Log> findPublicLogsByPlaceId(@Param("placeId") Long placeId);
 }
