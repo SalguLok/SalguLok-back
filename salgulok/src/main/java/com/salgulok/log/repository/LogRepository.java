@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
     // 회원별 로그 조회
@@ -18,6 +20,16 @@ public interface LogRepository extends JpaRepository<Log, Long> {
 
     // 로그 검색 (공개 로그만)
     List<Log> findByTitleContainingAndIsPublicTrue(String search);
+
+    // 체류 전/중 여부 확인 후 log 반환(없을 시 null)
+    @Query("""
+        select l 
+        from Log l
+        where l.user.userId = :userId
+          and :today between l.startDate and l.endDate
+    """)
+    Optional<Log> findCurrentTravelLog(@Param("userId") Long userId,
+                                       @Param("today") LocalDate today);
   
     // 전체 공개 살구록 리스트
     List<Log> findByIsPublicTrue();
