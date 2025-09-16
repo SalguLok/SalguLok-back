@@ -6,10 +6,24 @@ import com.salgulok.image.dto.response.ImageConfirmResponse;
 import com.salgulok.image.dto.response.PresignedUrlResponse;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+//import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * ImageService 구현체
@@ -22,17 +36,47 @@ import java.util.Collections;
 @Transactional(readOnly = true)
 public class ImageServiceImpl implements ImageService {
 
-    // 예: 추후 S3Presigner, Repository 등을 주입받을 예정
-    // private final S3Presigner s3Presigner;
-    // private final TemplateImageRepository templateImageRepository;
+    private final S3Presigner s3Presigner;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
+    private static final Duration EXPIRY = Duration.ofMinutes(10);
 
     @Override
     public PresignedUrlResponse issuePresignedUrls(User user, PresignedUrlRequest request) {
-        // TODO: S3 presigned URL 발급 로직
-        return PresignedUrlResponse.builder()
-                .items(Collections.emptyList())
-                .build();
+        List<PresignedUrlResponse.Item> items = new ArrayList<>();
+
+        for (PresignedUrlRequest.FileSpec f : request.getFiles()) {
+            String ext = getExt(f.getFileName());                 // ".png"
+            String key = buildKey(user.getUserId(), ext);         // images/2025/09/17/{userId}/{uuid}.png
+
+            PutObjectRequest putReq = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(f.getContentType())
+                    //.acl(ObjectCannedACL.PUBLIC_READ)
+                    .build();
+
+            PutObjectPresignRequest presignReq = PutObjectPresignRequest.builder()
+                    .signatureDuration(EXPIRY)
+                    .putObjectRequest(putReq)
+                    .build();
+
+            PresignedPutObjectRequest presigned = s3Presigner.presignPutObject(presignReq);
+
+            items.add(PresignedUrlResponse.Item.builder()
+                    .fileName(f.getFileName())
+                    .objectKey(key)
+                    .presignedUrl(presigned.url().toString())     // ← DTO 필드명에 맞춤
+                    .contentType(f.getContentType())
+                    .expiresInSec(EXPIRY.toSeconds())
+                    .build());
+        }
+
+        return PresignedUrlResponse.builder().items(items).build();
     }
+
 
     @Override
     @Transactional
@@ -49,4 +93,46 @@ public class ImageServiceImpl implements ImageService {
         // TODO: 소유자 검증 -> S3 객체 삭제 -> 레코드 삭제
     }
 
+    private String getExt(String fileName) {
+        int i = fileName.lastIndexOf('.');
+        return (i >= 0) ? fileName.substring(i) : "";
+    }
+
+    private String buildKey(Long userId, String ext) {
+        LocalDate today = LocalDate.now();
+        return String.format("images/%d/%02d/%02d/%d/%s%s",
+                today.getYear(), today.getMonthValue(), today.getDayOfMonth(),
+                userId, UUID.randomUUID(), ext);
+    }
+
+    // ImageServiceImpl.java
+    @Override
+    public PresignedUrlResponse issueGetPresignedUrl(User user, String objectKey) {
+        GetObjectRequest getReq = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .build();
+
+        GetObjectPresignRequest presignReq = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(5))  // 5분짜리 링크
+                .getObjectRequest(getReq)
+                .build();
+
+        PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignReq);
+
+        PresignedUrlResponse.Item item = PresignedUrlResponse.Item.builder()
+                .fileName(null) // 다운로드할 때만 필요하면 세팅
+                .objectKey(objectKey)
+                .presignedUrl(presigned.url().toString())
+                .contentType("image/*")
+                .expiresInSec(Duration.ofMinutes(5).toSeconds())
+                .build();
+
+        return PresignedUrlResponse.builder()
+                .items(Collections.singletonList(item))
+                .build();
+    }
+
 }
+
+
