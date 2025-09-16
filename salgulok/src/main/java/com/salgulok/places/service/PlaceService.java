@@ -59,8 +59,6 @@ public class PlaceService {
     //해당 장소를 포함한 공개 살구록 리스트
     @Transactional(readOnly = true)
     public List<LogResponse> getLogsByPlace(Long placeId) {
-        // (선택) 존재 확인: 없으면 빈 리스트/예외 중 택1
-        // if (!placeRepository.existsById(placeId)) return List.of();
 
         return logRepository.findPublicLogsByPlaceId(placeId)
                 .stream()
