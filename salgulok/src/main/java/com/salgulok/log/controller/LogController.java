@@ -3,6 +3,7 @@ package com.salgulok.log.controller;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.response.LogCreateResponse;
+import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
@@ -55,6 +56,26 @@ public class LogController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<LogListResponse> getMyLog(@AuthenticationPrincipal User user){
+        LogListResponse response = logService.getMyLog(user);
+        return ResponseEntity.ok(response);
+    }
+
+    //록 지역별 살구록
+    @GetMapping("/region")
+    public ResponseEntity<LogListResponse> getLogByRegion(@RequestParam("id") Long id){
+        LogListResponse response = logService.getLogByRegion(id);
+        return ResponseEntity.ok(response);
+    }
+
+    // 살구록 검색
+    @GetMapping
+    public ResponseEntity<LogListResponse> getLogBySearch(@RequestParam("search") String search){
+        LogListResponse response = logService.getLogBySearch(search);
+        return ResponseEntity.ok(response);
+    }
+
     // 전체 공개 살구록 리스트
     @GetMapping("/public")
     public ResponseEntity<List<LogResponse>> getPublicLogs() {
@@ -87,7 +108,7 @@ public class LogController {
         logService.increaseViewCount(logId, user);
         return ResponseEntity.ok().build();
     }
-
+  
     // 좋아요 로직
     @PostMapping("/{logId}/likes")
     public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,
