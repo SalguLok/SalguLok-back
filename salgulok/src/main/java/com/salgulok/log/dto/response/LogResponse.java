@@ -30,6 +30,7 @@ public class LogResponse {
                 .imgUrl(log.getImgUrl())
                 .oneReview(log.getOneReview())
                 .likes(log.getLikes())
+
                 .build();
     }
 }

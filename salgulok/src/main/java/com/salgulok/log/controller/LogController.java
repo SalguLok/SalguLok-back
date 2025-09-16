@@ -103,4 +103,11 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    // 로그 인기순 정렬 (프론트 실수 방지를 위해 공개 로그만 정렬함)
+    @GetMapping("/popular")
+    public ResponseEntity<List<LogResponse>> getPopularLogs() {
+        return ResponseEntity.ok(logService.getPopularLogs());
+    }
+
+
 }
