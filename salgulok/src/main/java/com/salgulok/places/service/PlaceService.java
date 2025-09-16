@@ -1,5 +1,8 @@
 package com.salgulok.places.service;
 
+import com.salgulok.log.domain.Log;
+import com.salgulok.log.dto.response.LogResponse;
+import com.salgulok.log.repository.LogRepository;
 import com.salgulok.places.domain.Place;
 import com.salgulok.places.dto.response.PlaceResponseDto;
 import com.salgulok.places.repository.PlaceRepository;
@@ -20,6 +23,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final LocationTourService tourService;
     private final KeywordTourService keywordTourService;
+    private final LogRepository logRepository;
 
     @Transactional
     public int syncFromTourApi(double lat,double lng, int radius) {
@@ -51,6 +55,19 @@ public class PlaceService {
 
         return savedOrUpdated;
     }
+
+    //해당 장소를 포함한 공개 살구록 리스트
+    @Transactional(readOnly = true)
+    public List<LogResponse> getLogsByPlace(Long placeId) {
+        // (선택) 존재 확인: 없으면 빈 리스트/예외 중 택1
+        // if (!placeRepository.existsById(placeId)) return List.of();
+
+        return logRepository.findPublicLogsByPlaceId(placeId)
+                .stream()
+                .map(LogResponse::from)
+                .toList();
+    }
+
 
     @Transactional
     public int syncFromKeyword(String keyword){

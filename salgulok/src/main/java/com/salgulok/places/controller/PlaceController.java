@@ -1,5 +1,6 @@
 package com.salgulok.places.controller;
 
+import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.places.dto.response.PlaceResponseDto;
 import com.salgulok.places.service.PlaceService;
 import lombok.RequiredArgsConstructor;
@@ -44,10 +45,11 @@ public class PlaceController {
     }
 
     // 3. 해당 장소 포함된 살구록 리스트 조회
-//    @GetMapping("/{placeId}/logs")
-//    public List<String> getLogsByPlace(@PathVariable Long placeId) {
-//        return placeService.getLogsByPlace(placeId);
-//    }
+    @GetMapping("/{placeId}/logs")
+    public List<LogResponse> getLogsByPlace(@PathVariable Long placeId) {
+        return placeService.getLogsByPlace(placeId);
+    }
+
 
     // 4. 전체 인기장소
     @GetMapping("/popular")
