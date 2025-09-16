@@ -47,6 +47,6 @@ public class AuthService {
         String refreshToken = jwtManager.createRefreshToken(user);
 
         refreshTokenService.save(user, refreshToken); // refresh token Redis에 저장
-        return new JwtTokenResponse(accessToken, refreshToken);
+        return new JwtTokenResponse(accessToken, refreshToken, user.getUserId());
     }
 }
