@@ -28,6 +28,16 @@ public class ImageController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/presigned")
+    public ResponseEntity<PresignedUrlResponse> issueGetPresignedUrl(
+            @AuthenticationPrincipal User user,
+            @RequestParam String objectKey
+    ) {
+        PresignedUrlResponse response = imageService.issueGetPresignedUrl(user, objectKey);
+        return ResponseEntity.ok(response);
+    }
+
+
     @PostMapping("/confirm")
     public ResponseEntity<ImageConfirmResponse> confirmUpload(
             @AuthenticationPrincipal User user,
@@ -47,4 +57,5 @@ public class ImageController {
     }
 
 }
+
 

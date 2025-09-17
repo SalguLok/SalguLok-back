@@ -108,7 +108,27 @@ public class LogController {
         logService.increaseViewCount(logId, user);
         return ResponseEntity.ok().build();
     }
+  
+    // 좋아요 로직
+    @PostMapping("/{logId}/likes")
+    public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,
+                                             @PathVariable Long logId) {
+        logService.increaseLikeCount(logId, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{logId}/likes")
+    public ResponseEntity<Void> decreaseLike(@AuthenticationPrincipal User user,
+                                             @PathVariable Long logId) {
+        logService.decreaseLikeCount(logId, user);
+        return ResponseEntity.ok().build();
+    }
+
+    // 로그 인기순 정렬 (프론트 실수 방지를 위해 공개 로그만 정렬함)
+    @GetMapping("/popular")
+    public ResponseEntity<List<LogResponse>> getPopularLogs() {
+        return ResponseEntity.ok(logService.getPopularLogs());
+    }
+
 
 }
-
-

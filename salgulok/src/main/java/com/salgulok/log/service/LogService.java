@@ -146,5 +146,30 @@ public class LogService {
         }
         return new LogDateCheckResponse(false);
     }
-}
 
+    @Transactional
+    public void increaseLikeCount(Long logId, User user) {
+        Log log = findByLogId(logId);
+        // 본인이 누를 수 없는 제약
+        if (!log.getUser().getUserId().equals(user.getUserId())) {
+            log.increaseLikes();
+        }
+    }
+
+    @Transactional
+    public void decreaseLikeCount(Long logId, User user) {
+        Log log = findByLogId(logId);
+        if (!log.getUser().getUserId().equals(user.getUserId())) {
+            log.decreaseLikes();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<LogResponse> getPopularLogs() {
+        return logRepository.findByIsPublicTrueOrderByLikesDesc()
+                .stream()
+                .map(LogResponse::from)
+                .toList();
+    }
+
+}
