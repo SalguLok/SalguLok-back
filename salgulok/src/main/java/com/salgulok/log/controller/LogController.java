@@ -1,8 +1,10 @@
 package com.salgulok.log.controller;
 
+import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.response.LogCreateResponse;
+import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.service.LogService;
@@ -22,15 +24,7 @@ import java.util.List;
 public class LogController {
     private final LogService logService;
 
-//    @PostMapping
-//    public ResponseEntity<Void> createLog(@AuthenticationPrincipal User user,
-//                                          @Valid @RequestBody LogCreateRequest request){
-//        Long logId = logService.createLog(user, request);
-//        return ResponseEntity.created(URI.create("/logs/"+logId)).build();
-//    }
-
     @PostMapping
-
     public ResponseEntity<LogCreateResponse> createLog(@AuthenticationPrincipal User user,
                                                        @Valid @RequestBody LogCreateRequest request) {
         Long logId = logService.createLog(user, request);
@@ -40,6 +34,12 @@ public class LogController {
                 .body(new LogCreateResponse(logId, location));
     }
 
+    @PostMapping("/checkDate")
+    public ResponseEntity<LogDateCheckResponse> checkDate(@AuthenticationPrincipal User user,
+                                                          @Valid @RequestBody LogCheckRequest request){
+        LogDateCheckResponse response = logService.checkDate(user, request);
+        return ResponseEntity.ok(response);
+    }
 
     @DeleteMapping("/{logId}")
     public ResponseEntity<Void> deleteLog(@AuthenticationPrincipal User user,
@@ -62,7 +62,7 @@ public class LogController {
         return ResponseEntity.ok(response);
     }
 
-    //록 지역별 살구록
+    // 지역별 살구록
     @GetMapping("/region")
     public ResponseEntity<LogListResponse> getLogByRegion(@RequestParam("id") Long id){
         LogListResponse response = logService.getLogByRegion(id);

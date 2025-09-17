@@ -3,8 +3,10 @@ package com.salgulok.log.service;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
+import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.repository.LogRepository;
@@ -134,6 +136,15 @@ public class LogService {
         if (!log.getUser().getUserId().equals(user.getUserId())) {
             log.increaseView();
         }
+    }
+
+    @Transactional(readOnly = true)
+    public LogDateCheckResponse checkDate(User user, LogCheckRequest request) {
+        List<Log> overlappingLogs = logRepository.findOverlappingLogs(user.getUserId(), request.getStartDate(), request.getEndDate());
+        if(!overlappingLogs.isEmpty()){
+            return new LogDateCheckResponse(true);
+        }
+        return new LogDateCheckResponse(false);
     }
 
     @Transactional
