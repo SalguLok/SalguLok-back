@@ -8,4 +8,5 @@ import lombok.Getter;
 public class IsTravelingResponse {
     Boolean traveling;
     Long logId; //traveling이 false면 logId null 반환
+    Long regionId;
 }

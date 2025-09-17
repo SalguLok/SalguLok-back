@@ -59,9 +59,9 @@ public class UserService {
         Log currentTravelLog = logRepository.findCurrentTravelLog(user.getUserId(), LocalDate.now())
                 .orElse(null);
         if(currentTravelLog == null){
-            return new IsTravelingResponse(false, null);
+            return new IsTravelingResponse(false, null, null);
         }
-        return new IsTravelingResponse(true, currentTravelLog.getLogId());
+        return new IsTravelingResponse(true, currentTravelLog.getLogId(), currentTravelLog.getRegion().getRegionId());
     }
 
     private User findByUserId(Long userId){
