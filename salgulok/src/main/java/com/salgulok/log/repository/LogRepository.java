@@ -30,7 +30,17 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     """)
     Optional<Log> findCurrentTravelLog(@Param("userId") Long userId,
                                        @Param("today") LocalDate today);
-  
+
+    @Query("""
+        select l
+        from Log l
+        where l.user.userId = :userId
+          and not (l.endDate < :newStartDate or l.startDate > :newEndDate)
+""")
+    List<Log> findOverlappingLogs(@Param("userId") Long userId,
+                                  @Param("newStartDate") LocalDate newStartDate,
+                                  @Param("newEndDate") LocalDate newEndDate);
+
     // 전체 공개 살구록 리스트
     List<Log> findByIsPublicTrue();
 
