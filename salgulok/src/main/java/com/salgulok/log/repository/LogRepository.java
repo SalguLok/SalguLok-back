@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
-    // 회원별 로그 조회
+    // 회원별 로그 조회 (내 로그용)
     List<Log> findByUserOrderByCreatedAtDesc(User user);
 
     // 지역별 로그 조회 (공개 로그만)
-    List<Log> findByRegionAndIsPublicTrue(Region region);
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);
 
     // 로그 검색 (공개 로그만)
     List<Log> findByTitleContainingAndIsPublicTrue(String search);
@@ -33,6 +33,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     Optional<Log> findCurrentTravelLog(@Param("userId") Long userId,
                                        @Param("today") LocalDate today);
 
+    // 로그 생성 시 해당 날짜에 여행중인지 확인
     @Query("""
         select l
         from Log l
@@ -98,14 +99,14 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     List<Log> findPublicAndUploadedLogsByPlaceId(@Param("placeId") Long placeId);
 
     // 전체 반환 (Sort 필터링 추가)
-    List<Log> findByIsPublicTrue(Sort sort);
+    List<Log> findByIsPublicTrueAndIsUploadTrue(Sort sort);
 
     // 지역 필터링 (Sort 필터링 추가)
-    List<Log> findByRegionAndIsPublicTrue(Region region, Sort sort);
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region, Sort sort);
 
     // 검색어 있는 경우 (Sort 필터링 추가)
-    List<Log> findByTitleContainingAndIsPublicTrue(String title, Sort sort);
+    List<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrue(String title, Sort sort);
 
     // 검색어 + 지역 필터링 (Sort 필터링 추가)
-    List<Log> findByTitleContainingAndRegionAndIsPublicTrue(String title, Region region, Sort sort);
+    List<Log> findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(String title, Region region, Sort sort);
 }

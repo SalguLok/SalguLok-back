@@ -68,7 +68,7 @@ public class LogService {
     @Transactional(readOnly = true)
     public LogListResponse getLogByRegion(Long id) {
         Region region = findByRegionId(id);
-        List<Log> logs = logRepository.findByRegionAndIsPublicTrue(region);
+        List<Log> logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region);
         return new LogListResponse(logs.stream()
                 .map(LogResponse::from)
                 .collect(Collectors.toList()));
@@ -96,18 +96,18 @@ public class LogService {
         if (regionId == 0) {
             // 지역 없는 경우 검색값으로 필터링
             if (search != null && !search.isEmpty()) {
-                logs = logRepository.findByTitleContainingAndIsPublicTrue(search, sortOption);
+                logs = logRepository.findByTitleContainingAndIsPublicTrueAndIsUploadTrue(search, sortOption);
             } else {    // 지역 코드 있는데 검색어 없는 경우
-                logs = logRepository.findByIsPublicTrue(sortOption);
+                logs = logRepository.findByIsPublicTrueAndIsUploadTrue(sortOption);
             }
         } else {
             // 지역 필터링
             Region region = findByRegionId(regionId);
             // 검색어 없는 경우
             if (search != null && !search.isEmpty()) {
-                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrue(search, region, sortOption);
+                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(search, region, sortOption);
             } else {    // 검색어 있는 경우
-                logs = logRepository.findByRegionAndIsPublicTrue(region, sortOption);
+                logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region, sortOption);
             }
         }
 
