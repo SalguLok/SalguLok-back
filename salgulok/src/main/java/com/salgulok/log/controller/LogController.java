@@ -1,9 +1,12 @@
 package com.salgulok.log.controller;
 
+import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.request.LogUploadUpdateRequest;
 import com.salgulok.log.dto.response.LogCreateResponse;
+import com.salgulok.log.dto.response.LogDateCheckResponse;
+import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
@@ -22,15 +25,7 @@ import java.util.List;
 public class LogController {
     private final LogService logService;
 
-//    @PostMapping
-//    public ResponseEntity<Void> createLog(@AuthenticationPrincipal User user,
-//                                          @Valid @RequestBody LogCreateRequest request){
-//        Long logId = logService.createLog(user, request);
-//        return ResponseEntity.created(URI.create("/logs/"+logId)).build();
-//    }
-
     @PostMapping
-
     public ResponseEntity<LogCreateResponse> createLog(@AuthenticationPrincipal User user,
                                                        @Valid @RequestBody LogCreateRequest request) {
         Long logId = logService.createLog(user, request);
@@ -40,6 +35,12 @@ public class LogController {
                 .body(new LogCreateResponse(logId, location));
     }
 
+    @PostMapping("/checkDate")
+    public ResponseEntity<LogDateCheckResponse> checkDate(@AuthenticationPrincipal User user,
+                                                          @Valid @RequestBody LogCheckRequest request){
+        LogDateCheckResponse response = logService.checkDate(user, request);
+        return ResponseEntity.ok(response);
+    }
 
     @DeleteMapping("/{logId}")
     public ResponseEntity<Void> deleteLog(@AuthenticationPrincipal User user,
@@ -53,6 +54,30 @@ public class LogController {
                                                  @PathVariable Long logId,
                                                  @Valid @RequestBody LogUpdateRequest request){
         LogResponse response = logService.updateLog(user, logId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<LogListResponse> getMyLog(@AuthenticationPrincipal User user){
+        LogListResponse response = logService.getMyLog(user);
+        return ResponseEntity.ok(response);
+    }
+
+    // 지역별 살구록
+    @GetMapping("/region")
+    public ResponseEntity<LogListResponse> getLogByRegion(@RequestParam("id") Long id){
+        LogListResponse response = logService.getLogByRegion(id);
+        return ResponseEntity.ok(response);
+    }
+
+    // 살구록 검색 (키워드 검색/소팅/지역검색)
+    @GetMapping("/search")
+    public ResponseEntity<LogListResponse> getLogs(
+            @RequestParam(value = "keyword", required = false) String search,
+            @RequestParam(value = "sort", defaultValue = "latest") String sort,
+            @RequestParam(value = "regionId", defaultValue = "0") Long regionId
+    ) {
+        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId);
         return ResponseEntity.ok(response);
     }
 

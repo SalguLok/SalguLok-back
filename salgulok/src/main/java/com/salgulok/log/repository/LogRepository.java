@@ -2,13 +2,48 @@ package com.salgulok.log.repository;
 
 import com.salgulok.log.domain.Log;
 import com.salgulok.region.domain.Region;
+import com.salgulok.user.domain.User;
+import org.springframework.data.domain.Sort;
+import com.salgulok.region.domain.Region;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
+    // 회원별 로그 조회 (내 로그용)
+    List<Log> findByUserOrderByCreatedAtDesc(User user);
+
+    // 지역별 로그 조회 (공개 로그만)
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);
+
+    // 로그 검색 (공개 로그만)
+    List<Log> findByTitleContainingAndIsPublicTrue(String search);
+
+    // 체류 전/중 여부 확인 후 log 반환(없을 시 null)
+    @Query("""
+        select l 
+        from Log l
+        where l.user.userId = :userId
+          and :today between l.startDate and l.endDate
+    """)
+    Optional<Log> findCurrentTravelLog(@Param("userId") Long userId,
+                                       @Param("today") LocalDate today);
+
+    // 로그 생성 시 해당 날짜에 여행중인지 확인
+    @Query("""
+        select l
+        from Log l
+        where l.user.userId = :userId
+          and not (l.endDate < :newStartDate or l.startDate > :newEndDate)
+""")
+    List<Log> findOverlappingLogs(@Param("userId") Long userId,
+                                  @Param("newStartDate") LocalDate newStartDate,
+                                  @Param("newEndDate") LocalDate newEndDate);
+
     // 전체 공개 살구록 리스트
     List<Log> findByIsPublicTrue();
 
@@ -63,5 +98,15 @@ public interface LogRepository extends JpaRepository<Log, Long> {
    """)
     List<Log> findPublicAndUploadedLogsByPlaceId(@Param("placeId") Long placeId);
 
+    // 전체 반환 (Sort 필터링 추가)
+    List<Log> findByIsPublicTrueAndIsUploadTrue(Sort sort);
 
+    // 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region, Sort sort);
+
+    // 검색어 있는 경우 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrue(String title, Sort sort);
+
+    // 검색어 + 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(String title, Region region, Sort sort);
 }
