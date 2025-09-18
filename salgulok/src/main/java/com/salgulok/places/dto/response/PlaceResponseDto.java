@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,8 +39,12 @@ public class PlaceResponseDto {
                 .addr2(place.getAddr2())
                 .tel(place.getTel())
                 .overview(place.getOverview())
-                .star(place.getStar() != null ? place.getStar() : 0.0)
+                .star(round2(place.getStar()))
                 .starCount(place.getStarCount()!=null?place.getStarCount():0)
                 .build();
+    }
+    private static double round2(Double v) {
+        if (v == null) return 0.0;
+        return BigDecimal.valueOf(v).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }
