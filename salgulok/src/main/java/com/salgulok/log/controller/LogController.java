@@ -69,10 +69,14 @@ public class LogController {
         return ResponseEntity.ok(response);
     }
 
-    // 살구록 검색
-    @GetMapping
-    public ResponseEntity<LogListResponse> getLogBySearch(@RequestParam("search") String search){
-        LogListResponse response = logService.getLogBySearch(search);
+    // 살구록 검색 (키워드 검색/소팅/지역검색)
+    @GetMapping("/search")
+    public ResponseEntity<LogListResponse> getLogs(
+            @RequestParam(value = "keyword", required = false) String search,
+            @RequestParam(value = "sort", defaultValue = "latest") String sort,
+            @RequestParam(value = "regionId", defaultValue = "0") Long regionId
+    ) {
+        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId);
         return ResponseEntity.ok(response);
     }
 

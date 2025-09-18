@@ -3,6 +3,7 @@ package com.salgulok.log.repository;
 import com.salgulok.log.domain.Log;
 import com.salgulok.region.domain.Region;
 import com.salgulok.user.domain.User;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -64,4 +65,16 @@ public interface LogRepository extends JpaRepository<Log, Long> {
        ORDER BY l.createdAt DESC
        """)
     List<Log> findPublicLogsByPlaceId(@Param("placeId") Long placeId);
+
+    // 전체 반환 (Sort 필터링 추가)
+    List<Log> findByIsPublicTrue(Sort sort);
+
+    // 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByRegionAndIsPublicTrue(Region region, Sort sort);
+
+    // 검색어 있는 경우 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndIsPublicTrue(String title, Sort sort);
+
+    // 검색어 + 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndRegionAndIsPublicTrue(String title, Region region, Sort sort);
 }

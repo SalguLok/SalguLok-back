@@ -14,6 +14,7 @@ import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,13 +74,48 @@ public class LogService {
                 .collect(Collectors.toList()));
     }
 
-    // TODO: 페이징 필요
+    // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogListResponse getLogBySearch(String search) {
-        List<Log> logs = logRepository.findByTitleContainingAndIsPublicTrue(search);
-        return new LogListResponse(logs.stream()
-                .map(LogResponse::from)
-                .collect(Collectors.toList()));
+    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId) {
+        Sort sortOption;
+
+        // 최신순, 조회순, 좋아요순 소팅
+        switch (sort) {
+            case "view":
+                sortOption = Sort.by(Sort.Direction.DESC, "view");
+                break;
+            case "like":
+                sortOption = Sort.by(Sort.Direction.DESC, "likes");
+                break;
+            default: // 기본값 최신순
+                sortOption = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+
+        List<Log> logs;
+
+        if (regionId == 0) {
+            // 지역 없는 경우 검색값으로 필터링
+            if (search != null && !search.isEmpty()) {
+                logs = logRepository.findByTitleContainingAndIsPublicTrue(search, sortOption);
+            } else {    // 지역 코드 있는데 검색어 없는 경우
+                logs = logRepository.findByIsPublicTrue(sortOption);
+            }
+        } else {
+            // 지역 필터링
+            Region region = findByRegionId(regionId);
+            // 검색어 없는 경우
+            if (search != null && !search.isEmpty()) {
+                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrue(search, region, sortOption);
+            } else {    // 검색어 있는 경우
+                logs = logRepository.findByRegionAndIsPublicTrue(region, sortOption);
+            }
+        }
+
+        return new LogListResponse(
+                logs.stream()
+                        .map(LogResponse::from)
+                        .collect(Collectors.toList())
+        );
     }
 
 
