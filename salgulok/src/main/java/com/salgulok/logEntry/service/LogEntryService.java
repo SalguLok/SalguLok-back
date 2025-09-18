@@ -180,6 +180,32 @@ public class LogEntryService {
         return mapToDetail(entry, templates);
     }
 
+    @Transactional(readOnly = true)
+    public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
+        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdOrderByEntryDateAsc(logId);
+
+        List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
+            int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
+
+            String objectKey = templateImageRepository
+                    .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
+                    .map(TemplateImage::getImageUrl)   // ← 컬럼은 imageUrl이지만 실제로 objectKey 저장 중
+                    .orElse(null);
+
+            return LogEntryDateListResponse.Item.builder()
+                    .entryId(e.getLogEntryId())
+                    .entryDate(e.getEntryDate())
+                    .thumbnailObjectKey(objectKey)
+                    .templateCount(tCount)
+                    .build();
+        }).toList();
+
+        return LogEntryDateListResponse.builder()
+                .logId(logId)
+                .items(items)
+                .build();
+    }
+
     private LogEntryDetailResponse mapToDetail(LogEntry entry, List<Template> templates) {
         List<LogEntryDetailResponse.TemplateSummary> tSummaries = templates.stream().map(t -> {
             List<TemplateImage> imgs =

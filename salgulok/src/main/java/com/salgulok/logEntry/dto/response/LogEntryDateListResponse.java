@@ -16,7 +16,7 @@ public class LogEntryDateListResponse {
     public static class Item {
         private Long entryId;
         private LocalDate entryDate;
-        private String thumbnailUrl;   // 대표 이미지 1장(없으면 null)
+        private String thumbnailObjectKey;  // 대표 이미지 1장(없으면 null)
         private Integer templateCount; // 옵션: 해당 날짜 템플릿 개수
     }
 }
