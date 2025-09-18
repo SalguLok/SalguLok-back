@@ -3,9 +3,12 @@ package com.salgulok.places.service;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.dto.response.LogResponse;
 import com.salgulok.log.repository.LogRepository;
+import com.salgulok.logEntry.repository.TemplateRepository;
 import com.salgulok.places.domain.Place;
 import com.salgulok.places.dto.response.PlaceResponseDto;
 import com.salgulok.places.repository.PlaceRepository;
+import com.salgulok.region.domain.Region;
+import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.tourapi.dto.LocationTourDto;
 import com.salgulok.tourapi.service.KeywordTourService;
 import com.salgulok.tourapi.service.LocationTourService;
@@ -24,6 +27,31 @@ public class PlaceService {
     private final LocationTourService tourService;
     private final KeywordTourService keywordTourService;
     private final LogRepository logRepository;
+    private final TemplateRepository templateRepository;
+    private final RegionRepository regionRepository;
+
+    //주소에서 regionId 매핑
+    private Long mapAddrToRegionId(String addr1) {
+        if (addr1 == null) return null;
+
+        // 전처리: 남/북도 → 도 로 단순화
+        String normalized = addr1;
+        if (normalized.startsWith("경상남도") || normalized.startsWith("경상북도")) {
+            normalized = "경상도";
+        } else if (normalized.startsWith("전라남도") || normalized.startsWith("전라북도")) {
+            normalized = "전라도";
+        } else if (normalized.startsWith("충청남도") || normalized.startsWith("충청북도")) {
+            normalized = "충청도";
+        }
+
+
+        List<Region> regions = regionRepository.findAll();
+        return regions.stream()
+                .filter(r -> addr1.startsWith(r.getName()))
+                .map(Region::getRegionId)
+                .findFirst()
+                .orElse(null);
+    }
 
     @Transactional
     public int syncFromTourApi(double lat,double lng, int radius) {
@@ -49,11 +77,25 @@ public class PlaceService {
             p.setOverview(null);
             if (p.getStar() == null) p.setStar(0.0);
 
+            p.setRegionId(mapAddrToRegionId(dto.getAddress()));
+
             placeRepository.save(p);
             savedOrUpdated++;
         }
 
         return savedOrUpdated;
+    }
+
+    //평점 재계산
+    @Transactional
+    public void recalcAndUpdateRating(Long placeId) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new IllegalArgumentException("Place not found: " + placeId));
+
+        Double avg = templateRepository.avgStarByPlaceId(placeId);
+        int cnt = templateRepository.countByPlaceId(placeId);
+
+        place.updateStar(avg != null ? avg : 0.0, cnt);
     }
 
     //해당 장소를 포함한 공개 살구록 리스트
@@ -93,6 +135,8 @@ public class PlaceService {
             String img=dto.getImageUrl1()!=null?dto.getImageUrl1():dto.getImageUrl2();
             if(img!=null) p.setImageUrl(img);
             if(p.getStar()==null) p.setStar(0.0);
+
+            p.setRegionId(mapAddrToRegionId(dto.getAddress()));
 
             placeRepository.save(p);
             upserts++;
@@ -137,19 +181,14 @@ public class PlaceService {
         List<Place> popularPlaces = placeRepository.findPopularPlaces();
 
         return popularPlaces.stream()
+                .limit(20)
                 .map(PlaceResponseDto::from)
                 .collect(Collectors.toList());
     }
 
     public List<PlaceResponseDto> getPopularPlacesByRegion(Long regionId) {
-        // 가정: regionId는 문자열 주소(addr1)에 매핑됨 (ex. 제주도 → "제주특별자치도")
-        String regionKeyword = convertRegionIdToKeyword(regionId);  // 아래 함수 참고
-
-        List<Place> places = placeRepository.findPopularPlacesByRegion(regionKeyword);
-
-        return places.stream()
-                .map(PlaceResponseDto::from)
-                .collect(Collectors.toList());
+        List<Place> places = placeRepository.findPopularPlacesByRegion(regionId);
+        return places.stream().map(PlaceResponseDto::from).toList();
     }
 
     // 지역 ID → 문자열 주소 매핑 (예시용)

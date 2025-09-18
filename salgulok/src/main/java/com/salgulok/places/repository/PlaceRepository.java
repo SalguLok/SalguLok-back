@@ -17,8 +17,12 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p ORDER BY p.star DESC")
     List<Place> findPopularPlaces();
 
-    @Query("SELECT p FROM Place p WHERE p.addr1 = :addr1 ORDER BY p.star DESC")
-    List<Place> findPopularPlacesByRegion(@Param("addr1") String addr1);
+    //평점 없는곳 제외
+    @Query("SELECT p FROM Place p WHERE p.regionId = :regionId AND p.starCount > 0 ORDER BY p.star DESC")
+    List<Place> findPopularPlacesByRegion(@Param("regionId") Long regionId);
+
+//    @Query("SELECT p FROM Place p WHERE p.addr1 = :addr1 ORDER BY p.star DESC")
+//    List<Place> findPopularPlacesByRegion(@Param("addr1") String addr1);
 
     List<Place> findAll();
 

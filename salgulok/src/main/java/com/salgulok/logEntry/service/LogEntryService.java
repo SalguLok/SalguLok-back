@@ -12,6 +12,7 @@ import com.salgulok.logEntry.dto.response.*;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
+import com.salgulok.places.service.PlaceService;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
 import com.salgulok.logEntry.dto.response.DayFillState;
 import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 
@@ -34,6 +37,8 @@ public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
     private final TemplateRepository templateRepository;
     private final TemplateImageRepository templateImageRepository;
+
+    private final PlaceService placeService;
 
     @Transactional
     public Long createLogEntry(User user, Long logId, LogEntryCreateRequest request) {
@@ -67,6 +72,16 @@ public class LogEntryService {
                 templateImageRepository.saveAll(images);
             }
         }
+
+        //저장한 템플릿들의 placeId 묶기
+        var affectedPlaceIds=savedTemplates.stream()
+                .map(Template::getPlaceId)
+                .collect(Collectors.toSet());
+
+        //장소별 평점 재계산
+        for(Long pid:affectedPlaceIds){
+            placeService.recalcAndUpdateRating(pid);
+        }
         return logEntry.getLogEntryId();
     }
 
@@ -78,6 +93,8 @@ public class LogEntryService {
 
         List<Template> updatedTemplates = new ArrayList<>();
 
+        Set<Long> affectedPlaceIds = new HashSet<>();
+
         for (TemplateUpdateRequest templateReq : request.getTemplates()) {
             Template template = templateRepository.findById(templateReq.getTemplateId())
                     .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
@@ -85,10 +102,15 @@ public class LogEntryService {
             template.update(templateReq.getText(), templateReq.getStar());
             updatedTemplates.add(template);
 
+            affectedPlaceIds.add(template.getPlaceId());
+
             templateImageRepository.deleteAllByTemplate(template);
             for (String imageUrl : templateReq.getImageUrls()) {
                 templateImageRepository.save(new TemplateImage(template, imageUrl));
             }
+        }
+        for (Long pid : affectedPlaceIds) {
+            placeService.recalcAndUpdateRating(pid);
         }
 
         return LogEntryUpdateResponse.from(logEntry, updatedTemplates);
@@ -102,12 +124,20 @@ public class LogEntryService {
 
         List<Template> templates = templateRepository.findAllByLogEntry(logEntry);
 
+        Set<Long> affectedPlaceIds = templates.stream()
+                .map(Template::getPlaceId)
+                .collect(Collectors.toSet());
+
         for (Template template : templates) {
             templateImageRepository.deleteAllByTemplate(template);
             templateRepository.delete(template);
         }
 
         logEntryRepository.delete(logEntry);
+
+        for (Long pid : affectedPlaceIds) {
+            placeService.recalcAndUpdateRating(pid);
+        }
     }
 
     @Transactional
