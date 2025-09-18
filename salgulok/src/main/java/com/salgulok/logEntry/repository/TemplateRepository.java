@@ -3,6 +3,8 @@ package com.salgulok.logEntry.repository;
 import com.salgulok.logEntry.domain.LogEntry;
 import com.salgulok.logEntry.domain.Template;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -19,4 +21,8 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     List<Template> findAllByLogEntry_LogEntryId(Long logEntryId);
     int countByLogEntry_LogEntryId(Long logEntryId);
 
+    @Query("select avg(t.star) from Template t where t.placeId = :placeId")
+    Double avgStarByPlaceId(@Param("placeId") Long placeId);
+
+    int countByPlaceId(Long placeId);
 }

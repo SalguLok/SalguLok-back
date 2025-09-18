@@ -39,6 +39,9 @@ public class Place{
     @Column(name="star_count", nullable=false)
     private Integer starCount=0;
 
+    @Column(name = "region_id")
+    private Long regionId;
+
     public void updateStar(double newAverage, int newCount) {
         this.star = newAverage;
         this.starCount = newCount;
