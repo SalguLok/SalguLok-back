@@ -186,15 +186,15 @@ public class LogEntryService {
         List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
             int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
 
-            String thumbnail = templateImageRepository
+            String objectKey = templateImageRepository
                     .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
-                    .map(TemplateImage::getImageUrl)
+                    .map(TemplateImage::getImageUrl)   // ← 컬럼은 imageUrl이지만 실제로 objectKey 저장 중
                     .orElse(null);
 
             return LogEntryDateListResponse.Item.builder()
                     .entryId(e.getLogEntryId())
                     .entryDate(e.getEntryDate())
-                    .thumbnailUrl(thumbnail)
+                    .thumbnailObjectKey(objectKey)
                     .templateCount(tCount)
                     .build();
         }).toList();
