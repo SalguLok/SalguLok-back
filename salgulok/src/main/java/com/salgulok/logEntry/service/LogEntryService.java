@@ -276,31 +276,4 @@ public class LogEntryService {
         }
     }
 
-    // === 조회: 날짜 칩 리스트(날짜 + 대표 이미지 1장) ===
-    @Transactional(readOnly = true)
-    public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
-        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdOrderByEntryDateAsc(logId);
-
-        List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
-            int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
-
-            String thumbnail = templateImageRepository
-                    .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
-                    .map(TemplateImage::getImageUrl)
-                    .orElse(null);
-
-            return LogEntryDateListResponse.Item.builder()
-                    .entryId(e.getLogEntryId())
-                    .entryDate(e.getEntryDate())
-                    .thumbnailUrl(thumbnail)
-                    .templateCount(tCount)
-                    .build();
-        }).toList();
-
-        return LogEntryDateListResponse.builder()
-                .logId(logId)
-                .items(items)
-                .build();
-    }
-
 }
