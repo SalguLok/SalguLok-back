@@ -42,6 +42,16 @@ public class CommunityService {
         if ("STAYING".equalsIgnoreCase(cond.getStatus())) {
             spec = spec.and(PostSpecs.authorIsStaying());
         }
+
+        // ★ regionId 우선
+        if (cond.getRegionId() != null) {
+            spec = spec.and(PostSpecs.authorRegionIdEq(cond.getRegionId()));
+        } else if (StringUtils.hasText(cond.getRegion())) {
+            // 문자열로 넘어오면 접두 매칭(서울→서울%) 또는 정확매칭 중 택1
+            spec = spec.and(PostSpecs.authorRegionLike(cond.getRegion()));
+            // 정확 매칭 원하면: spec = spec.and(PostSpecs.authorRegionEq(cond.getRegion()));
+        }
+
         return postRepository.findAll(spec, pageable).map(PostResponse::from);
     }
 
@@ -55,7 +65,7 @@ public class CommunityService {
     public Long createPost(PostCreateRequest req) {
         User author = userRepository.findById(req.getAuthorId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + req.getAuthorId()));
-        Post post = new Post(author, req.getTopic(), req.getContent());
+        Post post = new Post(author, req.getRegionId(), req.getTopic(), req.getContent());
         return postRepository.save(post).getId();
     }
 
@@ -84,4 +94,21 @@ public class CommunityService {
         }
         commentRepository.delete(c);
     }
+
+    // service/CommunityService.java (추가 분)
+    public Page<CommentResponse> getComments(Long postId, Pageable pageable) {
+        return commentRepository.findByPostId(postId, pageable)
+                .map(CommentResponse::from);
+    }
+
+    public CommentResponse getComment(Long postId, Long commentId) {
+        Comment c = commentRepository.findByIdAndPostId(commentId, postId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+        return CommentResponse.from(c);
+    }
+
+
+
+
+
 }

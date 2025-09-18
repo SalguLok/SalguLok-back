@@ -10,5 +10,6 @@ import lombok.Getter;
 public class PostCreateRequest {
     @NotNull private Topic topic;
     @NotBlank private String content;
+    @NotNull private Long regionId;
     @NotNull private Long authorId; // 로그인 처리했다면 Security에서 꺼내도 됨
 }
