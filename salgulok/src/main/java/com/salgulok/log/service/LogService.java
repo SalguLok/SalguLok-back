@@ -3,17 +3,23 @@ package com.salgulok.log.service;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
+import com.salgulok.log.domain.LogComment;
 import com.salgulok.log.dto.request.LogCheckRequest;
+import com.salgulok.log.dto.request.LogCommentCreateRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.response.LogCommentResponse;
 import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
 import com.salgulok.log.dto.response.LogResponse;
+import com.salgulok.log.repository.LogCommentRepository;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LogService {
     private final LogRepository logRepository;
+    private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
 
     @Transactional
@@ -220,6 +227,47 @@ public class LogService {
                 .stream().map(LogResponse::from).toList();
     }
 
+    @Transactional
+    public Long createComment(User user, Long logId, LogCommentCreateRequest request) {
+        Log log = findByLogId(logId);
+
+        if (!log.getIsPublic()) {
+            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        LogComment comment = new LogComment(log, user, request.getContent());
+        LogComment savedComment = logCommentRepository.save(comment);
+        return savedComment.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LogCommentResponse> getComments(Long logId, Pageable pageable) {
+        Log log = findByLogId(logId);
+
+        if (!log.getIsPublic()) {
+            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        return logCommentRepository.findByLogLogIdOrderByCreatedAtDesc(logId, pageable)
+                .map(LogCommentResponse::new);
+    }
+
+    @Transactional
+    public void deleteComment(User user, Long logId, Long commentId) {
+        Log log = findByLogId(logId);
+        LogComment comment = logCommentRepository.findById(commentId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
+
+        if (!comment.getLog().getLogId().equals(logId)) {
+            throw new SalgulokException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (!comment.getAuthor().getUserId().equals(user.getUserId())) {
+            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS);
+        }
+
+        logCommentRepository.delete(comment);
+    }
 
 //    @Transactional(readOnly = true)
 //    public LogListResponse getLogBySearch(String search) {

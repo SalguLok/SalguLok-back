@@ -1,9 +1,11 @@
 package com.salgulok.log.controller;
 
 import com.salgulok.log.dto.request.LogCheckRequest;
+import com.salgulok.log.dto.request.LogCommentCreateRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.request.LogUploadUpdateRequest;
+import com.salgulok.log.dto.response.LogCommentResponse;
 import com.salgulok.log.dto.response.LogCreateResponse;
 import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
@@ -12,6 +14,9 @@ import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -143,5 +148,27 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{logId}/comments")
+    public ResponseEntity<Long> createComment(@AuthenticationPrincipal User user,
+                                              @PathVariable Long logId,
+                                              @Valid @RequestBody LogCommentCreateRequest request) {
+        Long commentId = logService.createComment(user, logId, request);
+        return ResponseEntity.ok(commentId);
+    }
+
+    @GetMapping("/{logId}/comments")
+    public ResponseEntity<Page<LogCommentResponse>> getComments(@PathVariable Long logId,
+                                                                @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<LogCommentResponse> comments = logService.getComments(logId, pageable);
+        return ResponseEntity.ok(comments);
+    }
+
+    @DeleteMapping("/{logId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@AuthenticationPrincipal User user,
+                                              @PathVariable Long logId,
+                                              @PathVariable Long commentId) {
+        logService.deleteComment(user, logId, commentId);
+        return ResponseEntity.noContent().build();
+    }
 
 }
