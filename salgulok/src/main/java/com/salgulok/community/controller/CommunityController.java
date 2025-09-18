@@ -4,6 +4,7 @@ package com.salgulok.community.controller;
 import com.salgulok.community.domain.PostSearchCond;
 import com.salgulok.community.dto.request.CommentCreateRequest;
 import com.salgulok.community.dto.request.PostCreateRequest;
+import com.salgulok.community.dto.response.CommentResponse;
 import com.salgulok.community.dto.response.PostResponse;
 import com.salgulok.community.service.CommunityService;
 import jakarta.validation.Valid;
@@ -24,12 +25,13 @@ public class CommunityController {
     // 전체/지역/주제/체류여부 조합 조회
     @GetMapping("/posts")
     public Page<PostResponse> getPosts(
+            @RequestParam(required = false) Long regionId,
             @RequestParam(required = false) String region,
             @RequestParam(required = false) String topic,
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
     ) {
-        return communityService.searchPosts(new PostSearchCond(region, topic, status), pageable);
+        return communityService.searchPosts(new PostSearchCond(regionId, region, topic, status), pageable);
     }
 
     // 상세
@@ -66,4 +68,22 @@ public class CommunityController {
         communityService.deleteComment(postId, commentId);
         return ResponseEntity.noContent().build();
     }
+
+    // controller/CommunityController.java (추가 분)
+    @GetMapping("/posts/{postId}/comments")
+    public Page<CommentResponse> getComments(
+            @PathVariable Long postId,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable
+    ) {
+        return communityService.getComments(postId, pageable);
+    }
+
+    @GetMapping("/posts/{postId}/comments/{commentId}")
+    public CommentResponse getComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId
+    ) {
+        return communityService.getComment(postId, commentId);
+    }
+
 }

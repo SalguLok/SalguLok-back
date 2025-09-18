@@ -35,6 +35,8 @@ public class Comment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+
+
     public Comment(Post post, User author, String content) {
         this.post = post;
         this.author = author;
