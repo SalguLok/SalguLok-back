@@ -74,11 +74,6 @@ public class LogService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public List<LogResponse> getPublicLogs() {
-        return logRepository.findByIsPublicTrue()
-                .stream().map(LogResponse::from).collect(Collectors.toList());
-    }
 
     @Transactional(readOnly = true)
     public List<LogResponse> getLogsByUser(Long userId) {
@@ -124,14 +119,48 @@ public class LogService {
         }
     }
 
+    @Transactional
+    public void updateUploadStatus(User user, Long logId, Boolean isUpload) {
+        Log log = findByLogId(logId);
+        authorizeUser(user, log);
+
+        // 비공개 글은 업로드(게시) 불가
+        if (Boolean.TRUE.equals(isUpload) && !Boolean.TRUE.equals(log.getIsPublic())) {
+            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS); // 필요하면 전용 에러코드 추가
+        }
+
+        log.setUpload(isUpload); // Log 엔티티에 setter 또는 전용 메서드 존재 가정 (예: log.updateUpload(isUpload))
+    }
+
+    @Transactional(readOnly = true)
+    public List<LogResponse> getPublicLogs() {
+        return logRepository.findByIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc()
+                .stream().map(LogResponse::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<LogResponse> getPopularLogs() {
-        return logRepository.findByIsPublicTrueOrderByLikesDesc()
-                .stream()
-                .map(LogResponse::from)
-                .toList();
+        // ⚠ 기존 중복 메서드 제거: 이 메서드 단 하나만 유지
+        return logRepository.findPopularPublicAndUploaded()
+                .stream().map(LogResponse::from).toList();
     }
 
 
+//    @Transactional(readOnly = true)
+//    public LogListResponse getLogBySearch(String search) {
+//        var list = logRepository
+//                .findByTitleContainingAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(search)
+//                .stream().map(LogResponse::from).toList();
+//        return new LogListResponse(list);
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public LogListResponse getLogByRegion(Long regionId) {
+//        Region region = findByRegionId(regionId);
+//        var list = logRepository
+//                .findByRegionAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(region)
+//                .stream().map(LogResponse::from).toList();
+//        return new LogListResponse(list);
+//    }
 
 }
