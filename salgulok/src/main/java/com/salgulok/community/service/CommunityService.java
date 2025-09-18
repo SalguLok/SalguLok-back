@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @Service
 @RequiredArgsConstructor
@@ -45,11 +46,7 @@ public class CommunityService {
 
         // ★ regionId 우선
         if (cond.getRegionId() != null) {
-            spec = spec.and(PostSpecs.authorRegionIdEq(cond.getRegionId()));
-        } else if (StringUtils.hasText(cond.getRegion())) {
-            // 문자열로 넘어오면 접두 매칭(서울→서울%) 또는 정확매칭 중 택1
-            spec = spec.and(PostSpecs.authorRegionLike(cond.getRegion()));
-            // 정확 매칭 원하면: spec = spec.and(PostSpecs.authorRegionEq(cond.getRegion()));
+            spec = spec.and(PostSpecs.postRegionIdEq(cond.getRegionId()));
         }
 
         return postRepository.findAll(spec, pageable).map(PostResponse::from);
