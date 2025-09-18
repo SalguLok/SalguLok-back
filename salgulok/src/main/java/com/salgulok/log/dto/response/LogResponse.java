@@ -21,7 +21,6 @@ public class LogResponse {
     private String imgUrl;
     private String oneReview;
     private Long likes;
-    private Boolean isUpload;
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
@@ -36,7 +35,7 @@ public class LogResponse {
                 .imgUrl(log.getImgUrl())
                 .oneReview(log.getOneReview())
                 .likes(log.getLikes())
-                .isUpload(log.getIsUpload())
+
                 .build();
     }
 }

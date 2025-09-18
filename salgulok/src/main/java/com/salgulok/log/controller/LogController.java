@@ -3,7 +3,6 @@ package com.salgulok.log.controller;
 import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.request.LogUploadUpdateRequest;
 import com.salgulok.log.dto.response.LogCreateResponse;
 import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
@@ -133,14 +132,6 @@ public class LogController {
     @GetMapping("/popular")
     public ResponseEntity<List<LogResponse>> getPopularLogs() {
         return ResponseEntity.ok(logService.getPopularLogs());
-    }
-
-    @PatchMapping("/{logId}/upload")
-    public ResponseEntity<Void> setUpload(@AuthenticationPrincipal User user,
-                                          @PathVariable Long logId,
-                                          @Valid @RequestBody LogUploadUpdateRequest request) {
-        logService.updateUploadStatus(user, logId, request.getIsUpload());
-        return ResponseEntity.ok().build();
     }
 
 
