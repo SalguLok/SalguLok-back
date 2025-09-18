@@ -13,5 +13,4 @@ public class LogCheckRequest {
     private LocalDate endDate;
 
     @NotNull(message = "종료날짜를 입력해주세요.")
-    private LocalDate startDate;
 }

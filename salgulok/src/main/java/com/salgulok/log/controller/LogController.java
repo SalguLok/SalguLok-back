@@ -113,7 +113,7 @@ public class LogController {
         logService.increaseViewCount(logId, user);
         return ResponseEntity.ok().build();
     }
-
+  
     // 좋아요 로직
     @PostMapping("/{logId}/likes")
     public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,

@@ -29,6 +29,7 @@ import java.util.HashSet;
 import com.salgulok.logEntry.dto.response.DayFillState;
 import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 
+
 @Service
 @RequiredArgsConstructor
 public class LogEntryService {
@@ -179,32 +180,6 @@ public class LogEntryService {
         return mapToDetail(entry, templates);
     }
 
-    @Transactional(readOnly = true)
-    public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
-        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdOrderByEntryDateAsc(logId);
-
-        List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
-            int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
-
-            String thumbnail = templateImageRepository
-                    .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
-                    .map(TemplateImage::getImageUrl)
-                    .orElse(null);
-
-            return LogEntryDateListResponse.Item.builder()
-                    .entryId(e.getLogEntryId())
-                    .entryDate(e.getEntryDate())
-                    .thumbnailUrl(thumbnail)
-                    .templateCount(tCount)
-                    .build();
-        }).toList();
-
-        return LogEntryDateListResponse.builder()
-                .logId(logId)
-                .items(items)
-                .build();
-    }
-
     private LogEntryDetailResponse mapToDetail(LogEntry entry, List<Template> templates) {
         List<LogEntryDetailResponse.TemplateSummary> tSummaries = templates.stream().map(t -> {
             List<TemplateImage> imgs =
@@ -268,9 +243,38 @@ public class LogEntryService {
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
     }
 
+
     private void validateLogEntryOwnership(Long logId, LogEntry logEntry) {
         if (!Objects.equals(logEntry.getLog().getLogId(), logId)) {
             throw new SalgulokException(ErrorCode.LOG_ENTRY_NOT_IN_LOG);
         }
     }
+
+    // === 조회: 날짜 칩 리스트(날짜 + 대표 이미지 1장) ===
+    @Transactional(readOnly = true)
+    public LogEntryDateListResponse getEntryDatesWithThumbnail(Long logId) {
+        List<LogEntry> entries = logEntryRepository.findAllByLog_LogIdOrderByEntryDateAsc(logId);
+
+        List<LogEntryDateListResponse.Item> items = entries.stream().map(e -> {
+            int tCount = templateRepository.countByLogEntry_LogEntryId(e.getLogEntryId());
+
+            String thumbnail = templateImageRepository
+                    .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
+                    .map(TemplateImage::getImageUrl)
+                    .orElse(null);
+
+            return LogEntryDateListResponse.Item.builder()
+                    .entryId(e.getLogEntryId())
+                    .entryDate(e.getEntryDate())
+                    .thumbnailUrl(thumbnail)
+                    .templateCount(tCount)
+                    .build();
+        }).toList();
+
+        return LogEntryDateListResponse.builder()
+                .logId(logId)
+                .items(items)
+                .build();
+    }
+
 }
