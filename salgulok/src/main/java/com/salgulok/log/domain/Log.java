@@ -68,6 +68,9 @@ public class Log {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private Boolean isUpload = false;
+
     @Builder
     public Log(User user, String title, LocalDate startDate, LocalDate endDate, boolean isPublic, Region region, String imgUrl, String oneReview) {
         this.user = user;
@@ -102,6 +105,10 @@ public class Log {
         if (this.likes > 0) {
             this.likes -= 1;
         }
+    }
+    // 추가: 업로드(노출) 상태 토글
+    public void setUpload(boolean upload) {
+        this.isUpload = upload;
     }
 
 }

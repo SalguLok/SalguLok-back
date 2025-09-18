@@ -14,12 +14,13 @@ import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -67,19 +68,54 @@ public class LogService {
     @Transactional(readOnly = true)
     public LogListResponse getLogByRegion(Long id) {
         Region region = findByRegionId(id);
-        List<Log> logs = logRepository.findByRegionAndIsPublicTrue(region);
+        List<Log> logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region);
         return new LogListResponse(logs.stream()
                 .map(LogResponse::from)
                 .collect(Collectors.toList()));
     }
 
-    // TODO: 페이징 필요
+    // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogListResponse getLogBySearch(String search) {
-        List<Log> logs = logRepository.findByTitleContainingAndIsPublicTrue(search);
-        return new LogListResponse(logs.stream()
-                .map(LogResponse::from)
-                .collect(Collectors.toList()));
+    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId) {
+        Sort sortOption;
+
+        // 최신순, 조회순, 좋아요순 소팅
+        switch (sort) {
+            case "view":
+                sortOption = Sort.by(Sort.Direction.DESC, "view");
+                break;
+            case "like":
+                sortOption = Sort.by(Sort.Direction.DESC, "likes");
+                break;
+            default: // 기본값 최신순
+                sortOption = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+
+        List<Log> logs;
+
+        if (regionId == 0) {
+            // 지역 없는 경우 검색값으로 필터링
+            if (search != null && !search.isEmpty()) {
+                logs = logRepository.findByTitleContainingAndIsPublicTrueAndIsUploadTrue(search, sortOption);
+            } else {    // 지역 코드 있는데 검색어 없는 경우
+                logs = logRepository.findByIsPublicTrueAndIsUploadTrue(sortOption);
+            }
+        } else {
+            // 지역 필터링
+            Region region = findByRegionId(regionId);
+            // 검색어 없는 경우
+            if (search != null && !search.isEmpty()) {
+                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(search, region, sortOption);
+            } else {    // 검색어 있는 경우
+                logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region, sortOption);
+            }
+        }
+
+        return new LogListResponse(
+                logs.stream()
+                        .map(LogResponse::from)
+                        .collect(Collectors.toList())
+        );
     }
 
 
@@ -103,12 +139,6 @@ public class LogService {
         if (startDate.isAfter(endDate)) {
             throw new SalgulokException(ErrorCode.INVALID_DATE_RANGE);
         }
-    }
-
-    @Transactional(readOnly = true)
-    public List<LogResponse> getPublicLogs() {
-        return logRepository.findByIsPublicTrue()
-                .stream().map(LogResponse::from).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -164,12 +194,48 @@ public class LogService {
         }
     }
 
+    @Transactional
+    public void updateUploadStatus(User user, Long logId, Boolean isUpload) {
+        Log log = findByLogId(logId);
+        authorizeUser(user, log);
+
+        // 비공개 글은 업로드(게시) 불가
+        if (Boolean.TRUE.equals(isUpload) && !Boolean.TRUE.equals(log.getIsPublic())) {
+            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS); // 필요하면 전용 에러코드 추가
+        }
+
+        log.setUpload(isUpload); // Log 엔티티에 setter 또는 전용 메서드 존재 가정 (예: log.updateUpload(isUpload))
+    }
+
+    @Transactional(readOnly = true)
+    public List<LogResponse> getPublicLogs() {
+        return logRepository.findByIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc()
+                .stream().map(LogResponse::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<LogResponse> getPopularLogs() {
-        return logRepository.findByIsPublicTrueOrderByLikesDesc()
-                .stream()
-                .map(LogResponse::from)
-                .toList();
+        // ⚠ 기존 중복 메서드 제거: 이 메서드 단 하나만 유지
+        return logRepository.findPopularPublicAndUploaded()
+                .stream().map(LogResponse::from).toList();
     }
+
+
+//    @Transactional(readOnly = true)
+//    public LogListResponse getLogBySearch(String search) {
+//        var list = logRepository
+//                .findByTitleContainingAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(search)
+//                .stream().map(LogResponse::from).toList();
+//        return new LogListResponse(list);
+//    }
+//
+//    @Transactional(readOnly = true)
+//    public LogListResponse getLogByRegion(Long regionId) {
+//        Region region = findByRegionId(regionId);
+//        var list = logRepository
+//                .findByRegionAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(region)
+//                .stream().map(LogResponse::from).toList();
+//        return new LogListResponse(list);
+//    }
 
 }

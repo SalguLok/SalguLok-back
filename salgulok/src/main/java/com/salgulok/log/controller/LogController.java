@@ -3,6 +3,7 @@ package com.salgulok.log.controller;
 import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.request.LogUploadUpdateRequest;
 import com.salgulok.log.dto.response.LogCreateResponse;
 import com.salgulok.log.dto.response.LogDateCheckResponse;
 import com.salgulok.log.dto.response.LogListResponse;
@@ -69,10 +70,14 @@ public class LogController {
         return ResponseEntity.ok(response);
     }
 
-    // 살구록 검색
-    @GetMapping
-    public ResponseEntity<LogListResponse> getLogBySearch(@RequestParam("search") String search){
-        LogListResponse response = logService.getLogBySearch(search);
+    // 살구록 검색 (키워드 검색/소팅/지역검색)
+    @GetMapping("/search")
+    public ResponseEntity<LogListResponse> getLogs(
+            @RequestParam(value = "keyword", required = false) String search,
+            @RequestParam(value = "sort", defaultValue = "latest") String sort,
+            @RequestParam(value = "regionId", defaultValue = "0") Long regionId
+    ) {
+        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId);
         return ResponseEntity.ok(response);
     }
 
@@ -128,6 +133,14 @@ public class LogController {
     @GetMapping("/popular")
     public ResponseEntity<List<LogResponse>> getPopularLogs() {
         return ResponseEntity.ok(logService.getPopularLogs());
+    }
+
+    @PatchMapping("/{logId}/upload")
+    public ResponseEntity<Void> setUpload(@AuthenticationPrincipal User user,
+                                          @PathVariable Long logId,
+                                          @Valid @RequestBody LogUploadUpdateRequest request) {
+        logService.updateUploadStatus(user, logId, request.getIsUpload());
+        return ResponseEntity.ok().build();
     }
 
 

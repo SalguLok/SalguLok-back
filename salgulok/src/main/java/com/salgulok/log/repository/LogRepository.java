@@ -3,6 +3,8 @@ package com.salgulok.log.repository;
 import com.salgulok.log.domain.Log;
 import com.salgulok.region.domain.Region;
 import com.salgulok.user.domain.User;
+import org.springframework.data.domain.Sort;
+import com.salgulok.region.domain.Region;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,11 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
-    // 회원별 로그 조회
+    // 회원별 로그 조회 (내 로그용)
     List<Log> findByUserOrderByCreatedAtDesc(User user);
 
     // 지역별 로그 조회 (공개 로그만)
-    List<Log> findByRegionAndIsPublicTrue(Region region);
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);
 
     // 로그 검색 (공개 로그만)
     List<Log> findByTitleContainingAndIsPublicTrue(String search);
@@ -31,6 +33,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     Optional<Log> findCurrentTravelLog(@Param("userId") Long userId,
                                        @Param("today") LocalDate today);
 
+    // 로그 생성 시 해당 날짜에 여행중인지 확인
     @Query("""
         select l
         from Log l
@@ -64,4 +67,46 @@ public interface LogRepository extends JpaRepository<Log, Long> {
        ORDER BY l.createdAt DESC
        """)
     List<Log> findPublicLogsByPlaceId(@Param("placeId") Long placeId);
+
+    // 전체 공개 + 게시 목록 (최신순)
+    List<Log> findByIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc();
+
+    // 제목 검색: 공개 + 게시 (최신순)
+    List<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(String search);
+
+    // 지역별: 공개 + 게시 (최신순)
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(Region region);
+
+    // 인기순: 공개 + 게시 (좋아요 desc, 조회수 desc, 생성일 desc)
+    @Query("""
+       select l from Log l
+       where l.isPublic = true and l.isUpload = true
+       order by l.likes desc, l.view desc, l.createdAt desc
+       """)
+    List<Log> findPopularPublicAndUploaded();
+
+    // 장소 기반: 공개 + 게시 (최신순)
+    @Query("""
+   select distinct l
+   from Template t
+   join t.logEntry le
+   join le.log l
+   where t.placeId = :placeId
+     and l.isPublic = true
+     and l.isUpload = true
+   order by l.createdAt desc
+   """)
+    List<Log> findPublicAndUploadedLogsByPlaceId(@Param("placeId") Long placeId);
+
+    // 전체 반환 (Sort 필터링 추가)
+    List<Log> findByIsPublicTrueAndIsUploadTrue(Sort sort);
+
+    // 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region, Sort sort);
+
+    // 검색어 있는 경우 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrue(String title, Sort sort);
+
+    // 검색어 + 지역 필터링 (Sort 필터링 추가)
+    List<Log> findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(String title, Region region, Sort sort);
 }
