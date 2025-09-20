@@ -1,9 +1,11 @@
 package com.salgulok.image.service;
 
+import com.salgulok.image.domain.ImageMeta;
 import com.salgulok.image.dto.request.ImageConfirmRequest;
 import com.salgulok.image.dto.request.PresignedUrlRequest;
 import com.salgulok.image.dto.response.ImageConfirmResponse;
 import com.salgulok.image.dto.response.PresignedUrlResponse;
+import com.salgulok.image.repository.ImageMetaRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ import java.util.UUID;
 public class ImageServiceImpl implements ImageService {
 
     private final S3Presigner s3Presigner;
+    private final ImageMetaRepository imageMetaRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -75,16 +78,6 @@ public class ImageServiceImpl implements ImageService {
         }
 
         return PresignedUrlResponse.builder().items(items).build();
-    }
-
-
-    @Override
-    @Transactional
-    public ImageConfirmResponse confirmUpload(User user, ImageConfirmRequest request) {
-        // TODO: DB 저장(TemplateImage 등) 후 생성된 PK 반환
-        return ImageConfirmResponse.builder()
-                .imageIds(Collections.emptyList())
-                .build();
     }
 
     @Override
@@ -130,6 +123,44 @@ public class ImageServiceImpl implements ImageService {
 
         return PresignedUrlResponse.builder()
                 .items(Collections.singletonList(item))
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ImageConfirmResponse confirmUpload(User user, ImageConfirmRequest request) {
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("No items to confirm");
+        }
+
+        Long userId = user.getUserId();
+        List<Long> ids = new ArrayList<>();
+
+        for (var item : request.getItems()) {
+            if (item.getObjectKey() == null || item.getObjectKey().isBlank()) {
+                throw new IllegalArgumentException("objectKey is required");
+            }
+
+            // 멱등 처리: (user, objectKey) 중복 confirm 시 기존 레코드 재사용
+            var meta = imageMetaRepository
+                    .findByUser_UserIdAndObjectKey(userId, item.getObjectKey())
+                    .orElseGet(() -> imageMetaRepository.save(
+                            ImageMeta.builder()
+                                    .user(user)
+                                    .objectKey(item.getObjectKey())
+                                    .url(item.getUrl())
+                                    .fileName(item.getFileName())
+                                    .contentType(item.getContentType())
+                                    .size(item.getSize())
+                                    .status(ImageMeta.Status.CONFIRMED)
+                                    .build()
+                    ));
+
+            ids.add(meta.getId());
+        }
+
+        return ImageConfirmResponse.builder()
+                .imageIds(ids)
                 .build();
     }
 

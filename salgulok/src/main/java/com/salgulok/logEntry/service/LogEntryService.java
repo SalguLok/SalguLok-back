@@ -14,6 +14,8 @@ import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
 import com.salgulok.places.service.PlaceService;
 import com.salgulok.user.domain.User;
+import com.salgulok.image.repository.ImageMetaRepository;
+import com.salgulok.image.domain.ImageMeta;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +39,7 @@ public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
     private final TemplateRepository templateRepository;
     private final TemplateImageRepository templateImageRepository;
-
+    private final ImageMetaRepository imageMetaRepository;
     private final PlaceService placeService;
 
     @Transactional
@@ -45,7 +47,7 @@ public class LogEntryService {
         Log log = logRepository.findById(logId)
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
 
-        // TODO: log.getUser()와 user가 동일한지 확인하는 로직 추가
+        // TODO: log.getUser()와 user 동일성 검증
 
         LogEntry logEntry = new LogEntry(log, request.getEntryDate());
         logEntryRepository.save(logEntry);
@@ -63,30 +65,25 @@ public class LogEntryService {
 
         for (int i = 0; i < savedTemplates.size(); i++) {
             Template savedTemplate = savedTemplates.get(i);
-            List<TemplateCreateRequest.ImageRequest> imageRequests = request.getTemplates().get(i).getImages();
+            TemplateCreateRequest tReq = request.getTemplates().get(i);
 
-            if (imageRequests != null && !imageRequests.isEmpty()) {
-                List<TemplateImage> images = imageRequests.stream()
-                        .map(imgReq -> new TemplateImage(
-                                savedTemplate,
-                                imgReq.getObjectKey(),
-                                imgReq.getUrl(),
-                                imgReq.getFileName(),
-                                imgReq.getContentType(),
-                                imgReq.getSize()
-                        ))
-                        .collect(Collectors.toList());
-                templateImageRepository.saveAll(images);
+            // 1) 신규 권장: imageIds 기반 attach
+            attachTemplateImagesByIds(user, savedTemplate, tReq.getImageIds());
+
+            // 2) 호환: 예전 images가 있으면 사용
+            if ((tReq.getImageIds() == null || tReq.getImageIds().isEmpty())
+                    && tReq.getImages() != null && !tReq.getImages().isEmpty()) {
+                attachTemplateImagesLegacy(savedTemplate, tReq.getImages());
             }
         }
 
-        //저장한 템플릿들의 placeId 묶기
-        var affectedPlaceIds=savedTemplates.stream()
+        // 저장한 템플릿들의 placeId 묶기
+        var affectedPlaceIds = savedTemplates.stream()
                 .map(Template::getPlaceId)
                 .collect(Collectors.toSet());
 
-        //장소별 평점 재계산
-        for(Long pid:affectedPlaceIds){
+        // 장소별 평점 재계산
+        for (Long pid : affectedPlaceIds) {
             placeService.recalcAndUpdateRating(pid);
         }
         return logEntry.getLogEntryId();
@@ -99,7 +96,6 @@ public class LogEntryService {
         // TODO: user 권한 검사
 
         List<Template> updatedTemplates = new ArrayList<>();
-
         Set<Long> affectedPlaceIds = new HashSet<>();
 
         for (TemplateUpdateRequest templateReq : request.getTemplates()) {
@@ -108,29 +104,30 @@ public class LogEntryService {
 
             template.update(templateReq.getText(), templateReq.getStar());
             updatedTemplates.add(template);
-
             affectedPlaceIds.add(template.getPlaceId());
 
+            // 전체 교체
             templateImageRepository.deleteAllByTemplate(template);
-            if (templateReq.getImages() != null) {
-                for (TemplateCreateRequest.ImageRequest imgReq : templateReq.getImages()) {
-                    templateImageRepository.save(new TemplateImage(
-                            template,
-                            imgReq.getObjectKey(),
-                            imgReq.getUrl(),
-                            imgReq.getFileName(),
-                            imgReq.getContentType(),
-                            imgReq.getSize()
-                    ));
-                }
+            // (선택) templateImageRepository.deleteByTemplate_TemplateId(template.getTemplateId());
+
+            // 1) 신규 권장: imageIds 기반 attach
+            attachTemplateImagesByIds(user, template, templateReq.getImageIds());
+
+            // 2) 호환: 예전 images가 있으면 사용
+            if ((templateReq.getImageIds() == null || templateReq.getImageIds().isEmpty())
+                    && templateReq.getImages() != null && !templateReq.getImages().isEmpty()) {
+                attachTemplateImagesLegacy(template, templateReq.getImages());
             }
         }
+
         for (Long pid : affectedPlaceIds) {
             placeService.recalcAndUpdateRating(pid);
         }
 
         return LogEntryUpdateResponse.from(logEntry, updatedTemplates);
     }
+
+
 
     @Transactional
     public void deleteLogEntry(User user, Long logId, Long entryId) {
@@ -290,4 +287,55 @@ public class LogEntryService {
             throw new SalgulokException(ErrorCode.LOG_ENTRY_NOT_IN_LOG);
         }
     }
+
+    private void attachTemplateImagesByIds(User user, Template template, List<Long> imageIds) {
+        if (imageIds == null || imageIds.isEmpty()) return;
+
+        for (Long imageId : imageIds) {
+            ImageMeta meta = imageMetaRepository.findById(imageId)
+                    .orElseThrow(() -> new SalgulokException(ErrorCode.IMAGE_NOT_FOUND, "imageId=" + imageId));
+
+            // 소유자 검증
+            if (!meta.getUser().getUserId().equals(user.getUserId())) {
+                throw new SalgulokException(ErrorCode.OWNER_MISMATCH, "imageId=" + imageId);
+            }
+
+            // 중복 attach 방지
+            boolean exists = templateImageRepository
+                    .existsByTemplate_TemplateIdAndObjectKey(template.getTemplateId(), meta.getObjectKey());
+            if (exists) continue;
+
+            TemplateImage ti = new TemplateImage(
+                    template,
+                    meta.getObjectKey(),
+                    meta.getUrl(),
+                    meta.getFileName(),
+                    meta.getContentType(),
+                    meta.getSize()
+            );
+            templateImageRepository.save(ti);
+
+            // 선택: 상태 전환 (원하면 사용)
+            meta.markAttached(); // ImageMeta.Status.ATTACHED
+            // JPA Dirty Checking으로 업데이트 반영
+        }
+    }
+
+    private void attachTemplateImagesLegacy(Template template, List<TemplateCreateRequest.ImageRequest> images) {
+        if (images == null || images.isEmpty()) return;
+
+        List<TemplateImage> toSave = images.stream()
+                .map(img -> new TemplateImage(
+                        template,
+                        img.getObjectKey(),
+                        img.getUrl(),
+                        img.getFileName(),
+                        img.getContentType(),
+                        img.getSize()
+                ))
+                .toList();
+
+        templateImageRepository.saveAll(toSave);
+    }
+
 }
