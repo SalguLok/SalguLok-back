@@ -25,6 +25,7 @@ public class TemplateCreateRequest {
     private Integer star;
 
     /** 해당 장소에 업로드된 이미지 정보 리스트 */
+    private List<Long> imageIds;
     private List<ImageRequest> images;
 
     @Getter
