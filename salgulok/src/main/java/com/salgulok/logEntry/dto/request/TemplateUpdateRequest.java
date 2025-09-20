@@ -1,6 +1,8 @@
 package com.salgulok.logEntry.dto.request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
@@ -11,9 +13,20 @@ import java.util.List;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 public class TemplateUpdateRequest {
+
+    @NotNull(message = "templateId는 필수입니다.")
     private Long templateId;
+
     private String text;
-    private int star;
+
+    @NotNull(message = "별점은 필수입니다.")
+    private Integer star;
+
+    /** 신규 권장: /images/confirm 응답의 PK 리스트 */
+    private List<Long> imageIds;
+
+    /** 호환: 구방식(objectKey/url/...) */
     private List<TemplateCreateRequest.ImageRequest> images;
 }

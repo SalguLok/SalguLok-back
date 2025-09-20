@@ -25,4 +25,5 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     Double avgStarByPlaceId(@Param("placeId") Long placeId);
 
     int countByPlaceId(Long placeId);
+
 }

@@ -21,4 +21,7 @@ public interface TemplateImageRepository extends JpaRepository<TemplateImage, Lo
     // 특정 템플릿에 속한 이미지 모두 삭제
     void deleteAllByTemplate(Template template);
 
+    // 중복 attach 방지
+    boolean existsByTemplate_TemplateIdAndObjectKey(Long templateId, String objectKey);
+
 }
