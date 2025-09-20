@@ -64,11 +64,18 @@ public class LogEntryService {
 
         for (int i = 0; i < savedTemplates.size(); i++) {
             Template savedTemplate = savedTemplates.get(i);
-            List<String> imageUrls = request.getTemplates().get(i).getImageUrls();
+            List<TemplateCreateRequest.ImageRequest> imageRequests = request.getTemplates().get(i).getImages();
 
-            if (imageUrls != null && !imageUrls.isEmpty()) {
-                List<TemplateImage> images = imageUrls.stream()
-                        .map(url -> new TemplateImage(savedTemplate, url))
+            if (imageRequests != null && !imageRequests.isEmpty()) {
+                List<TemplateImage> images = imageRequests.stream()
+                        .map(imgReq -> new TemplateImage(
+                                savedTemplate,
+                                imgReq.getObjectKey(),
+                                imgReq.getUrl(),
+                                imgReq.getFileName(),
+                                imgReq.getContentType(),
+                                imgReq.getSize()
+                        ))
                         .collect(Collectors.toList());
                 templateImageRepository.saveAll(images);
             }
@@ -106,8 +113,17 @@ public class LogEntryService {
             affectedPlaceIds.add(template.getPlaceId());
 
             templateImageRepository.deleteAllByTemplate(template);
-            for (String imageUrl : templateReq.getImageUrls()) {
-                templateImageRepository.save(new TemplateImage(template, imageUrl));
+            if (templateReq.getImages() != null) {
+                for (TemplateCreateRequest.ImageRequest imgReq : templateReq.getImages()) {
+                    templateImageRepository.save(new TemplateImage(
+                            template,
+                            imgReq.getObjectKey(),
+                            imgReq.getUrl(),
+                            imgReq.getFileName(),
+                            imgReq.getContentType(),
+                            imgReq.getSize()
+                    ));
+                }
             }
         }
         for (Long pid : affectedPlaceIds) {
@@ -189,7 +205,7 @@ public class LogEntryService {
 
             String objectKey = templateImageRepository
                     .findFirstByTemplate_LogEntry_LogEntryIdOrderByTemplateImageIdAsc(e.getLogEntryId())
-                    .map(TemplateImage::getImageUrl)   // ← 컬럼은 imageUrl이지만 실제로 objectKey 저장 중
+                    .map(TemplateImage::getObjectKey)
                     .orElse(null);
 
             return LogEntryDateListResponse.Item.builder()
@@ -219,6 +235,7 @@ public class LogEntryService {
                     .images(imgs.stream().map(i ->
                             LogEntryDetailResponse.ImageSummary.builder()
                                     .imageId(i.getTemplateImageId())
+                                    .objectKey(i.getObjectKey())
                                     .imageUrl(i.getImageUrl())
                                     .build()
                     ).toList())

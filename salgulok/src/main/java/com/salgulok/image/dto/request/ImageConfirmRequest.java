@@ -13,8 +13,6 @@ import java.util.List;
 @Getter
 public class ImageConfirmRequest {
 
-    private Long templateId; // 템플릿 이미지 연동 시 사용 (없으면 프로필/마이페이지 등으로 활용)
-
     @NotEmpty
     @Valid
     private List<Item> items;

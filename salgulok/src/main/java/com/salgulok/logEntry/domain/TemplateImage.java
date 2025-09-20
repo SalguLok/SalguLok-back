@@ -26,13 +26,22 @@ public class TemplateImage {
     private Template template;
 
     @Column(nullable = false)
+    private String objectKey;
+
     private String imageUrl;
+    private String fileName;
+    private String contentType;
+    private Long imageSize;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
-    public TemplateImage(Template template, String imageUrl) {
+    public TemplateImage(Template template, String objectKey, String imageUrl, String fileName, String contentType, Long imageSize) {
         this.template = template;
+        this.objectKey = objectKey;
         this.imageUrl = imageUrl;
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.imageSize = imageSize;
     }
 }

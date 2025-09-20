@@ -24,6 +24,16 @@ public class TemplateCreateRequest {
     @NotNull(message = "별점은 필수입니다.")
     private Integer star;
 
-    /** 해당 장소에 업로드된 이미지 URL 리스트 */
-    private List<String> imageUrls;
+    /** 해당 장소에 업로드된 이미지 정보 리스트 */
+    private List<ImageRequest> images;
+
+    @Getter
+    public static class ImageRequest {
+        @NotNull
+        private String objectKey; // S3 객체 키
+        private String url; // CloudFront 등 최종 사용자에게 서빙될 URL
+        private String fileName;     // (선택) 원본 파일명
+        private String contentType;  // (선택)
+        private Long size;           // (선택)
+    }
 }
