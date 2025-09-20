@@ -27,6 +27,7 @@ public class LogEntryDetailResponse {
     @Getter @Builder
     public static class ImageSummary {
         private Long imageId;
+        private String objectKey;
         private String imageUrl;
     }
 }
