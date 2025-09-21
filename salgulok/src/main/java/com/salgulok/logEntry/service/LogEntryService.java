@@ -90,6 +90,28 @@ public class LogEntryService {
         return logEntry.getLogEntryId();
     }
 
+
+    @Transactional
+    public void deleteTemplate(User user,Long logId,Long entryId,Long templateId){
+        Template template=templateRepository.findById(templateId)
+                .orElseThrow(()->new SalgulokException((ErrorCode.TEMPLATE_NOT_FOUND)));
+
+        LogEntry templateEntry=template.getLogEntry();
+        if(!Objects.equals(templateEntry.getLogEntryId(),entryId)){
+            throw new SalgulokException(ErrorCode.LOG_ENTRY_NOT_IN_LOG);
+        }
+
+        validateLogEntryOwnership(logId,templateEntry);
+
+        Long affectedPlaceId=template.getPlaceId();
+
+        templateImageRepository.deleteAllByTemplate(template);
+
+        templateRepository.delete(template);
+
+        placeService.recalcAndUpdateRating(affectedPlaceId);
+    }
+
     @Transactional
     public LogEntryUpdateResponse updateLogEntry(User user, Long logId, Long entryId, LogEntryUpdateRequest request) {
         LogEntry logEntry = findLogEntryById(entryId);
