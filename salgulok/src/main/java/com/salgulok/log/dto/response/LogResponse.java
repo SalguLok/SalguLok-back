@@ -22,6 +22,7 @@ public class LogResponse {
     private String oneReview;
     private Long likes;
     private Boolean isUpload;
+    private Long ownerId;
 
     public static LogResponse from(Log log){
         return LogResponse.builder()
@@ -37,6 +38,7 @@ public class LogResponse {
                 .oneReview(log.getOneReview())
                 .likes(log.getLikes())
                 .isUpload(log.getIsUpload())
+                .ownerId(log.getUser().getUserId())
                 .build();
     }
 }
