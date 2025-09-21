@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +26,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 //    List<Place> findPopularPlacesByRegion(@Param("addr1") String addr1);
 
     List<Place> findAll();
+
+    List<Place> findByContentIdIn(Collection<Long> contentIds);
 
     @Query("SELECT p.star FROM Place p WHERE p.placeId = :placeId")
     Double findAverageRatingByPlaceId(@Param("placeId") Long placeId);

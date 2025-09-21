@@ -12,22 +12,20 @@ import com.salgulok.logEntry.dto.response.*;
 import com.salgulok.logEntry.repository.LogEntryRepository;
 import com.salgulok.logEntry.repository.TemplateImageRepository;
 import com.salgulok.logEntry.repository.TemplateRepository;
+import com.salgulok.places.repository.PlaceRepository;
 import com.salgulok.places.service.PlaceService;
 import com.salgulok.user.domain.User;
 import com.salgulok.image.repository.ImageMetaRepository;
 import com.salgulok.image.domain.ImageMeta;
+import com.salgulok.places.domain.Place;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Set;
-import java.util.HashSet;
+
 import com.salgulok.logEntry.dto.response.DayFillState;
 import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 
@@ -41,6 +39,8 @@ public class LogEntryService {
     private final TemplateImageRepository templateImageRepository;
     private final ImageMetaRepository imageMetaRepository;
     private final PlaceService placeService;
+
+    private final PlaceRepository placeRepository;
 
     @Transactional
     public Long createLogEntry(User user, Long logId, LogEntryCreateRequest request) {
@@ -110,6 +110,60 @@ public class LogEntryService {
 
         placeService.recalcAndUpdateRating(affectedPlaceId);
     }
+
+    @Transactional
+    public TemplateUpdateResponse updateSingleTemplate(
+            User user, Long logId, Long entryId, Long templateId, TemplateSingleUpdateRequest req) {
+
+        Template template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.TEMPLATE_NOT_FOUND));
+
+        LogEntry templateEntry = template.getLogEntry();
+
+        // entryId 일치 확인
+        if (!Objects.equals(templateEntry.getLogEntryId(), entryId)) {
+            throw new SalgulokException(ErrorCode.LOG_ENTRY_NOT_IN_LOG);
+        }
+
+        // logId 일치 확인
+        validateLogEntryOwnership(logId, templateEntry);
+        // TODO: user 권한 검사
+
+        // ⭐ 부분 업데이트: null이면 기존값 유지해서 update(...) 호출
+        String newText = (req.getText() != null) ? req.getText() : template.getText();
+        Integer reqStar = req.getStar();
+        int newStar = (reqStar != null) ? reqStar : template.getStar();
+
+        // (선택) 별점 유효성 체크
+        if (reqStar != null && (reqStar < 1 || reqStar > 5)) {
+            throw new SalgulokException(ErrorCode.INVALID_REQUEST, "star must be between 1 and 5");
+        }
+
+        // 엔티티 메서드 그대로 사용 (Template는 변경 안 함)
+        template.update(newText, newStar);
+
+        // 이미지 교체 플래그: imageIds 또는 images가 존재하면 전체 교체
+        boolean willReplaceImages = (req.getImageIds() != null) || (req.getImages() != null);
+        if (willReplaceImages) {
+            templateImageRepository.deleteAllByTemplate(template);
+
+            if (req.getImageIds() != null) {
+                attachTemplateImagesByIds(user, template, req.getImageIds());
+            } else if (req.getImages() != null) {
+                attachTemplateImagesLegacy(template, req.getImages());
+            }
+        }
+
+        // 장소 평점 재계산
+        placeService.recalcAndUpdateRating(template.getPlaceId());
+
+        // 최신 이미지 목록으로 응답 구성
+        List<TemplateImage> imgs =
+                templateImageRepository.findAllByTemplate_TemplateId(template.getTemplateId());
+
+        return TemplateUpdateResponse.of(template, imgs);
+    }
+
 
     @Transactional
     public LogEntryUpdateResponse updateLogEntry(User user, Long logId, Long entryId, LogEntryUpdateRequest request) {
@@ -241,13 +295,52 @@ public class LogEntryService {
     }
 
     private LogEntryDetailResponse mapToDetail(LogEntry entry, List<Template> templates) {
+
+//        var placeIdSet = templates.stream()
+//                .map(Template::getPlaceId)
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toSet());
+//
+//        var idToName = placeRepository.findAllById(placeIdSet).stream()
+//                .collect(Collectors.toMap(Place::getPlaceId,
+//                        p -> p.getPlaceName() != null ? p.getPlaceName() : ""));
+        // 1) 템플릿의 placeId 모으기
+        Set<Long> placeIdSet = templates.stream()
+                .map(Template::getPlaceId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 2) 먼저 PK로 한 번에 조회
+        Map<Long, String> idToName = placeRepository.findAllById(placeIdSet).stream()
+                .collect(Collectors.toMap(
+                        Place::getPlaceId,
+                        p -> p.getPlaceName() != null ? p.getPlaceName() : ""
+                ));
+
+        // 3) 매칭 안 된 ID들에 대해서는 contentId로 재시도
+        Set<Long> remaining = new HashSet<>(placeIdSet);
+        remaining.removeAll(idToName.keySet()); // PK로 못 찾은 것들
+
+        if (!remaining.isEmpty()) {
+            List<Place> byContentIds = placeRepository.findByContentIdIn(remaining);
+            for (Place p : byContentIds) {
+                Long contentId = p.getContentId();
+                if (contentId != null && remaining.contains(contentId)) {
+                    idToName.put(contentId, p.getPlaceName() != null ? p.getPlaceName() : "");
+                }
+            }
+        }
+
         List<LogEntryDetailResponse.TemplateSummary> tSummaries = templates.stream().map(t -> {
             List<TemplateImage> imgs =
                     templateImageRepository.findAllByTemplate_TemplateId(t.getTemplateId());
 
+            String placeName = idToName.getOrDefault(t.getPlaceId(), "");
+
             return LogEntryDetailResponse.TemplateSummary.builder()
                     .templateId(t.getTemplateId())
                     .placeId(t.getPlaceId())
+                    .placeName(placeName)
                     .text(t.getText())
                     .star(t.getStar())
                     .images(imgs.stream().map(i ->

@@ -1,7 +1,9 @@
 package com.salgulok.logEntry.controller;
 
+import com.salgulok.logEntry.dto.request.TemplateSingleUpdateRequest;
 import com.salgulok.logEntry.dto.response.LogEntryDetailResponse;
 import com.salgulok.logEntry.dto.response.LogEntryDateListResponse;
+import com.salgulok.logEntry.dto.response.TemplateUpdateResponse;
 import com.salgulok.logEntry.service.LogEntryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -68,4 +70,19 @@ public class LogEntryQueryController {
         logEntryService.deleteTemplate(null,logId,entryId,templateId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{entryId}/templates/{templateId}")
+    public ResponseEntity<TemplateUpdateResponse> updateTemplate(
+            @PathVariable Long logId,
+            @PathVariable Long entryId,
+            @PathVariable Long templateId,
+            @RequestBody TemplateSingleUpdateRequest request
+    ) {
+        // User 주입 방식에 맞춰 실제 사용자 넣기
+        TemplateUpdateResponse res =
+                logEntryService.updateSingleTemplate(null, logId, entryId, templateId, request);
+
+        return ResponseEntity.ok(res);
+    }
+
 }
