@@ -11,6 +11,7 @@ import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import static org.springframework.format.annotation.DateTimeFormat.ISO;
+
 import java.time.LocalDate;
 
 @RestController
@@ -59,6 +60,7 @@ public class LogEntryQueryController {
         return ResponseEntity.ok(summary);
     }
 
+
     @DeleteMapping("/{entryId}/templates/{templateId}")
     public ResponseEntity<Void> deleteTemplate(
         @PathVariable Long logId,
@@ -69,3 +71,4 @@ public class LogEntryQueryController {
         return ResponseEntity.noContent().build();
     }
 }
+
