@@ -58,4 +58,14 @@ public class LogEntryQueryController {
         String summary = logEntryService.getSummary(logId, entryId);
         return ResponseEntity.ok(summary);
     }
+
+    @DeleteMapping("/{entryId}/templates/{templateId}")
+    public ResponseEntity<Void> deleteTemplate(
+        @PathVariable Long logId,
+        @PathVariable Long entryId,
+        @PathVariable Long templateId
+    ){
+        logEntryService.deleteTemplate(null,logId,entryId,templateId);
+        return ResponseEntity.noContent().build();
+    }
 }
