@@ -19,6 +19,7 @@ public class LogEntryDetailResponse {
     public static class TemplateSummary {
         private Long templateId;
         private Long placeId;
+        private String placeName;
         private String text;
         private Integer star;
         private List<ImageSummary> images;
