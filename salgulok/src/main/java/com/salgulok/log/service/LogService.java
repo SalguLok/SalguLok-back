@@ -8,10 +8,7 @@ import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCommentCreateRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.response.LogCommentResponse;
-import com.salgulok.log.dto.response.LogDateCheckResponse;
-import com.salgulok.log.dto.response.LogListResponse;
-import com.salgulok.log.dto.response.LogResponse;
+import com.salgulok.log.dto.response.*;
 import com.salgulok.log.repository.LogCommentRepository;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
@@ -85,7 +82,7 @@ public class LogService {
 
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
+    public LogPagingListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
         Sort sortOption;
 
         // 최신순, 조회순, 좋아요순 소팅
@@ -121,11 +118,7 @@ public class LogService {
             }
         }
 
-        return new LogListResponse(
-                logs.stream()
-                        .map(LogResponse::from)
-                        .collect(Collectors.toList())
-        );
+        return new LogPagingListResponse(logs);
     }
 
 

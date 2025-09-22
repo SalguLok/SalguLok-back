@@ -5,11 +5,7 @@ import com.salgulok.log.dto.request.LogCommentCreateRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.request.LogUploadUpdateRequest;
-import com.salgulok.log.dto.response.LogCommentResponse;
-import com.salgulok.log.dto.response.LogCreateResponse;
-import com.salgulok.log.dto.response.LogDateCheckResponse;
-import com.salgulok.log.dto.response.LogListResponse;
-import com.salgulok.log.dto.response.LogResponse;
+import com.salgulok.log.dto.response.*;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
 import jakarta.validation.Valid;
@@ -77,13 +73,13 @@ public class LogController {
 
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @GetMapping("/search")
-    public ResponseEntity<LogListResponse> getLogs(
+    public ResponseEntity<LogPagingListResponse> getLogs(
             @RequestParam(value = "keyword", required = false) String search,
             @RequestParam(value = "sort", defaultValue = "latest") String sort,
             @RequestParam(value = "regionId", defaultValue = "0") Long regionId,
             @RequestParam(value = "page", defaultValue = "0") int page
     ) {
-        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page);
+        LogPagingListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page);
         return ResponseEntity.ok(response);
     }
 
