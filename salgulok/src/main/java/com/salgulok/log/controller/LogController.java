@@ -80,9 +80,10 @@ public class LogController {
     public ResponseEntity<LogListResponse> getLogs(
             @RequestParam(value = "keyword", required = false) String search,
             @RequestParam(value = "sort", defaultValue = "latest") String sort,
-            @RequestParam(value = "regionId", defaultValue = "0") Long regionId
+            @RequestParam(value = "regionId", defaultValue = "0") Long regionId,
+            @RequestParam(value = "page", defaultValue = "0") int page
     ) {
-        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId);
+        LogListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page);
         return ResponseEntity.ok(response);
     }
 
