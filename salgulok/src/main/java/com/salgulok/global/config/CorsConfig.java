@@ -13,7 +13,7 @@ public class CorsConfig implements WebMvcConfigurer {
                     "https://salgulok-front.vercel.app",  // 배포용
                     "http://localhost:5173"               // 로컬 개발용
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
