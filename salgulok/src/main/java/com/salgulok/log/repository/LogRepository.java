@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
     // 회원별 로그 조회 (내 로그용)
-    List<Log> findByUserOrderByCreatedAtDesc(User user);
+    Page<Log> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
     // 지역별 로그 조회 (공개 로그만)
     List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);

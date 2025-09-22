@@ -8,10 +8,7 @@ import com.salgulok.log.dto.request.LogCheckRequest;
 import com.salgulok.log.dto.request.LogCommentCreateRequest;
 import com.salgulok.log.dto.request.LogCreateRequest;
 import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.response.LogCommentResponse;
-import com.salgulok.log.dto.response.LogDateCheckResponse;
-import com.salgulok.log.dto.response.LogListResponse;
-import com.salgulok.log.dto.response.LogResponse;
+import com.salgulok.log.dto.response.*;
 import com.salgulok.log.repository.LogCommentRepository;
 import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
@@ -66,12 +63,10 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public LogListResponse getMyLog(User user) {
-        List<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user);
-        return new LogListResponse(logs.stream()
-                .map(LogResponse::from)
-                .collect(Collectors.toList()));
-        //TODO: return하는 함수 중복. 리팩터링 필요
+    public LogPagingListResponse getMyLog(User user, int page) {
+        Pageable pageable = PageRequest.of(page, LogPage_paging_size);
+        Page<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        return new LogPagingListResponse(logs);
     }
 
     @Transactional(readOnly = true)
@@ -85,7 +80,7 @@ public class LogService {
 
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
+    public LogPagingListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
         Sort sortOption;
 
         // 최신순, 조회순, 좋아요순 소팅
@@ -121,11 +116,7 @@ public class LogService {
             }
         }
 
-        return new LogListResponse(
-                logs.stream()
-                        .map(LogResponse::from)
-                        .collect(Collectors.toList())
-        );
+        return new LogPagingListResponse(logs);
     }
 
 
