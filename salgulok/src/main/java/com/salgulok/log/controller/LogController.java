@@ -59,8 +59,10 @@ public class LogController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<LogListResponse> getMyLog(@AuthenticationPrincipal User user){
-        LogListResponse response = logService.getMyLog(user);
+    public ResponseEntity<LogPagingListResponse> getMyLog(
+            @AuthenticationPrincipal User user,
+            @RequestParam(value = "page", defaultValue = "0") int page){
+        LogPagingListResponse response = logService.getMyLog(user, page);
         return ResponseEntity.ok(response);
     }
 

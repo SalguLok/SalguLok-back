@@ -63,12 +63,10 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public LogListResponse getMyLog(User user) {
-        List<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user);
-        return new LogListResponse(logs.stream()
-                .map(LogResponse::from)
-                .collect(Collectors.toList()));
-        //TODO: return하는 함수 중복. 리팩터링 필요
+    public LogPagingListResponse getMyLog(User user, int page) {
+        Pageable pageable = PageRequest.of(page, LogPage_paging_size);
+        Page<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        return new LogPagingListResponse(logs);
     }
 
     @Transactional(readOnly = true)
