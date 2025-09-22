@@ -26,6 +26,4 @@ public class ImageConfirmRequest {
         private String contentType;  // (선택)
         private Long size;           // (선택)
     }
-
 }
-

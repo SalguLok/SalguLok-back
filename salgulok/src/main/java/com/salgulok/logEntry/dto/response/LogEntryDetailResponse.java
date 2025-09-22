@@ -31,6 +31,4 @@ public class LogEntryDetailResponse {
         private String objectKey;
         private String imageUrl;
     }
-
 }
-

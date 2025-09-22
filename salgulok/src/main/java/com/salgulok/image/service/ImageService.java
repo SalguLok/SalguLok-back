@@ -10,6 +10,5 @@ public interface ImageService {
     PresignedUrlResponse issuePresignedUrls(User user, PresignedUrlRequest request);
     ImageConfirmResponse confirmUpload(User user, ImageConfirmRequest request);
     void deleteImage(User user, Long imageId);
-
     PresignedUrlResponse issueGetPresignedUrl(User user, String objectKey);
 }

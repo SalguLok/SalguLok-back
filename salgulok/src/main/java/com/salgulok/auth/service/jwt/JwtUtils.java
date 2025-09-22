@@ -13,9 +13,8 @@ import java.security.Key;
 @Getter
 public class JwtUtils {
     private final String secretKey;
-    private final long accessTokenMillis = 1000L * 60 * 60 * 24; // 개발 중임으로 우선 하루. 배포 시 1시간으로 수정 예정
-    private final long refreshTokenMillis = 1000L * 60 * 60 * 24 * 31; // 1달(31일)
-    private final int refreshTokenSeconds = 60 * 60 * 24 * 31; // 31일 초단위
+    private final long accessTokenExpiration = 1000 * 60 * 60 * 24; // 개발 중임으로 우선 하루. 배포 시 1시간으로 수정 예정
+    private final long refreshTokenExpiration = 1000 * 60 * 60 * 24 * 31; // 1달(31일)
 
     public JwtUtils(@Value("${jwt.secret.key}") String secretKey) {
         this.secretKey = secretKey;

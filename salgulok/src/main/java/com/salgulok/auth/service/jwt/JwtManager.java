@@ -1,5 +1,6 @@
 package com.salgulok.auth.service.jwt;
 
+import com.salgulok.user.domain.User;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import io.jsonwebtoken.Claims;
@@ -17,12 +18,12 @@ public class JwtManager {
 
     private final JwtUtils jwtUtils;
 
-    public String createAccessToken(Long userId) {
-        return createToken(userId, jwtUtils.getAccessTokenMillis());
+    public String createAccessToken(User user) {
+        return createToken(user.getUserId(), jwtUtils.getAccessTokenExpiration());
     }
 
-    public String createRefreshToken(Long userId) {
-        return createToken(userId, jwtUtils.getRefreshTokenMillis());
+    public String createRefreshToken(User user) {
+        return createToken(user.getUserId(), jwtUtils.getRefreshTokenExpiration());
     }
 
     private String createToken(Long userId, long expiration) {
@@ -47,23 +48,11 @@ public class JwtManager {
     }
 
     // JWT 파싱후 Claims에서 userId 추출
-    public String getUserIdFromClaims(String token) {
-        Claims claims = Jwts.parserBuilder()
+    public Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
                 .setSigningKey(jwtUtils.getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
-    }
-
-    // AccessToken 만료까지 남은 시간(ms) 계산
-    public long getExpiration(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(jwtUtils.getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        Date expiration = claims.getExpiration();
-        return expiration.getTime() - System.currentTimeMillis();
     }
 }

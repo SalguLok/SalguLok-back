@@ -61,5 +61,4 @@ public class S3ClientFacade {
                 .build();
         s3Client.deleteObject(deleteRequest);
     }
-
 }

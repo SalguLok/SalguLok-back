@@ -8,13 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.time.LocalDate;
 
-
 /**
  * 하루 단위 기록(LogEntry) 엔티티에 대한 JPA 레포지토리
  * - 기본적인 CRUD 메서드 제공
  */
 public interface LogEntryRepository extends JpaRepository<LogEntry, Long> {
-
     Optional<LogEntry> findByLog_LogIdAndEntryDate(Long logId, LocalDate entryDate);
 
     List<LogEntry> findAllByLog_LogIdOrderByEntryDateAsc(Long logId);
@@ -22,4 +20,3 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, Long> {
     List<LogEntry> findAllByLog_LogIdAndEntryDateBetween(Long logId, LocalDate start, LocalDate end);
 
 }
-

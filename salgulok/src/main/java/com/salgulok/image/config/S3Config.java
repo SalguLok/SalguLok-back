@@ -42,6 +42,4 @@ public class S3Config {
                 .credentialsProvider(creds())
                 .build();
     }
-
 }
-

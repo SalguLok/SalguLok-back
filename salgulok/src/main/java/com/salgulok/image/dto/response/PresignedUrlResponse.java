@@ -22,5 +22,4 @@ public class PresignedUrlResponse {
         private String contentType;
         private Long expiresInSec;    // 만료 초
     }
-
 }

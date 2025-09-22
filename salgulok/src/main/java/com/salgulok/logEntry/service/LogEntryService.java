@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import com.salgulok.logEntry.dto.response.DayFillState;
 import com.salgulok.logEntry.dto.response.FillCalendarResponse;
 
-
 @Service
 @RequiredArgsConstructor
 public class LogEntryService {
@@ -397,7 +396,6 @@ public class LogEntryService {
         return logEntryRepository.findById(entryId)
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
     }
-
 
     private void validateLogEntryOwnership(Long logId, LogEntry logEntry) {
         if (!Objects.equals(logEntry.getLog().getLogId(), logId)) {

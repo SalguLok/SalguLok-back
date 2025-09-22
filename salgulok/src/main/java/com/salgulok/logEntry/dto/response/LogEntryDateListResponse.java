@@ -20,4 +20,3 @@ public class LogEntryDateListResponse {
         private Integer templateCount; // 옵션: 해당 날짜 템플릿 개수
     }
 }
-

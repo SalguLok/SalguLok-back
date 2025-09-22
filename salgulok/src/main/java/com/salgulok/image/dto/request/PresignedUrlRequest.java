@@ -31,6 +31,4 @@ public class PresignedUrlRequest {
         private String contentType;    // image/jpeg, image/png 등
         private Long size;             // 바이트 (선택)
     }
-
 }
-

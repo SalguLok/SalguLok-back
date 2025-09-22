@@ -58,7 +58,4 @@ public class ImageMeta {
     }
 
     public enum Status { CONFIRMED, ATTACHED }
-
 }
-
-
