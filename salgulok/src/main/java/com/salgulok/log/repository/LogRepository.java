@@ -3,8 +3,8 @@ package com.salgulok.log.repository;
 import com.salgulok.log.domain.Log;
 import com.salgulok.region.domain.Region;
 import com.salgulok.user.domain.User;
-import org.springframework.data.domain.Sort;
-import com.salgulok.region.domain.Region;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
     // 회원별 로그 조회 (내 로그용)
-    List<Log> findByUserOrderByCreatedAtDesc(User user);
+    Page<Log> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
     // 지역별 로그 조회 (공개 로그만)
     List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);
@@ -99,14 +99,14 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     List<Log> findPublicAndUploadedLogsByPlaceId(@Param("placeId") Long placeId);
 
     // 전체 반환 (Sort 필터링 추가)
-    List<Log> findByIsPublicTrueAndIsUploadTrue(Sort sort);
+    Page<Log> findByIsPublicTrueAndIsUploadTrue(Pageable pageable);
 
     // 지역 필터링 (Sort 필터링 추가)
-    List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region, Sort sort);
+    Page<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region, Pageable pageable);
 
     // 검색어 있는 경우 (Sort 필터링 추가)
-    List<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrue(String title, Sort sort);
+    Page<Log> findByTitleContainingAndIsPublicTrueAndIsUploadTrue(String title, Pageable pageable);
 
     // 검색어 + 지역 필터링 (Sort 필터링 추가)
-    List<Log> findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(String title, Region region, Sort sort);
+    Page<Log> findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(String title, Region region, Pageable pageable);
 }
