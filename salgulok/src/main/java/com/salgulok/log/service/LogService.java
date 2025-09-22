@@ -19,6 +19,7 @@ import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class LogService {
     private final LogRepository logRepository;
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
+    private static final int LogPage_paging_size = 4; // 추후 수정예정~ 일단 테스트로 4개만
 
     @Transactional
     public Long createLog(User user, LogCreateRequest request) {
@@ -83,7 +85,7 @@ public class LogService {
 
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId) {
+    public LogListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
         Sort sortOption;
 
         // 최신순, 조회순, 좋아요순 소팅
@@ -97,24 +99,25 @@ public class LogService {
             default: // 기본값 최신순
                 sortOption = Sort.by(Sort.Direction.DESC, "createdAt");
         }
+        Pageable pageable = PageRequest.of(page, LogPage_paging_size, sortOption);  //sorting까지 추가해서 pageable 추가
 
-        List<Log> logs;
+        Page<Log> logs;
 
         if (regionId == 0) {
             // 지역 없는 경우 검색값으로 필터링
-            if (search != null && !search.isEmpty()) {
-                logs = logRepository.findByTitleContainingAndIsPublicTrueAndIsUploadTrue(search, sortOption);
+            if (search != null && !search.trim().isEmpty()) {
+                logs = logRepository.findByTitleContainingAndIsPublicTrueAndIsUploadTrue(search, pageable);
             } else {    // 지역 코드 있는데 검색어 없는 경우
-                logs = logRepository.findByIsPublicTrueAndIsUploadTrue(sortOption);
+                logs = logRepository.findByIsPublicTrueAndIsUploadTrue(pageable);
             }
         } else {
             // 지역 필터링
             Region region = findByRegionId(regionId);
             // 검색어 없는 경우
-            if (search != null && !search.isEmpty()) {
-                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(search, region, sortOption);
+            if (search != null && !search.trim().isEmpty()) {
+                logs = logRepository.findByTitleContainingAndRegionAndIsPublicTrueAndIsUploadTrue(search, region, pageable);
             } else {    // 검색어 있는 경우
-                logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region, sortOption);
+                logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region, pageable);
             }
         }
 
