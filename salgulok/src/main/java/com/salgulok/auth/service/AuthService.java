@@ -18,6 +18,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,8 +87,7 @@ public class AuthService {
         tokenService.saveBlacklist(accessToken, expireMillis);
 
         // 저장된 쿠키 삭제
-        Cookie deleteCookie = createRefreshTokenCookie(null);
-        response.addCookie(deleteCookie);
+        addRefreshTokenCookie(response, null);
     }
 
     // accessToken 및 refreshToken 생성
@@ -97,19 +98,21 @@ public class AuthService {
         tokenService.saveToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
 
         // 클라이언트 쿠키에 Refresh Token 저장
-        response.addCookie(createRefreshTokenCookie(refreshToken));
+        addRefreshTokenCookie(response, refreshToken);
 
         return accessToken;
     }
 
     // refresh Token용 쿠키 설정
-    private Cookie createRefreshTokenCookie(String refreshToken){
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setHttpOnly(true);    // JS에서 접근 불가
-        refreshCookie.setSecure(true);      // HTTPS 전용
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(jwtUtils.getRefreshTokenSeconds());
+    private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)   // JS 접근 불가
+                .secure(true)     // HTTPS 전용
+                .sameSite("None") // 크로스 도메인 허용
+                .path("/")
+                .maxAge(jwtUtils.getRefreshTokenSeconds())
+                .build();
 
-        return refreshCookie;
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 }
