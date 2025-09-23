@@ -26,6 +26,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private Long kakaoId;
 
+    @Column(unique = true)
     private String username;
 
     @Column(name = "profile_img")

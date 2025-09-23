@@ -14,6 +14,7 @@ import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
+import com.salgulok.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,7 @@ public class LogService {
     private final LogRepository logRepository;
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
+    private final UserRepository userRepository;
     private static final int LogPage_paging_size = 4; // 추후 수정예정~ 일단 테스트로 4개만
 
     @Transactional
@@ -143,9 +145,13 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public List<LogResponse> getLogsByUser(Long userId) {
-        return logRepository.findByUser_UserId(userId)
-                .stream().map(LogResponse::from).collect(Collectors.toList());
+    public LogPagingListResponse getLogsByUser(String username, int page) {
+        User findUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, LogPage_paging_size);
+        Page<Log> logs = logRepository.findByUserAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(findUser, pageable);
+        return new LogPagingListResponse(logs);
     }
 
     @Transactional(readOnly = true)
