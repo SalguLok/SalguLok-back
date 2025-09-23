@@ -31,6 +31,11 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{nickname}")
+    public ResponseEntity<UserResponse> getOtherInfo(@PathVariable("nickname") String nickname){
+        return ResponseEntity.ok(userService.getOtherInfo(nickname));
+    }
+
     @PostMapping("/info")
     public ResponseEntity<UserResponse> userInfoEnter(@AuthenticationPrincipal User user, @Valid @RequestBody UserInfoRequest request){
         UserResponse response = userService.createUserInfo(user, request);

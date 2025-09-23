@@ -92,15 +92,17 @@ public class LogController {
     }
 
     // 내 살구록 리스트
-    @GetMapping("/me")
-    public ResponseEntity<List<LogResponse>> getMyLogs(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId()));
-    }
+//    @GetMapping("/me")
+//    public ResponseEntity<List<LogResponse>> getMyLogs(@AuthenticationPrincipal User user) {
+//        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId()));
+//    }
 
     // 특정 유저 살구록 리스트
-    @GetMapping("/users/{userId}")
-    public ResponseEntity<List<LogResponse>> getUserLogs(@PathVariable Long userId) {
-        return ResponseEntity.ok(logService.getLogsByUser(userId));
+    @GetMapping("/users/{username}")
+    public ResponseEntity<LogPagingListResponse> getUserLogs(
+            @PathVariable("username") String username,
+            @RequestParam(value = "page", defaultValue = "0") int page) {
+        return ResponseEntity.ok(logService.getLogsByUser(username, page));
     }
 
     // 특정 살구록 상세 조회 : 제목, 한줄평, 여행 시작일 및 종료일, 공개 여부, 여행 지역 ID, 대표 이미지 URL 모두 포함

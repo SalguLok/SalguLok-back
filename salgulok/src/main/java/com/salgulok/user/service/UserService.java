@@ -31,6 +31,13 @@ public class UserService {
         return UserResponse.from(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserResponse getOtherInfo(String nickname) {
+        User findUser = userRepository.findByUsername(nickname)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.USER_NOT_FOUND));
+        return UserResponse.from(findUser);
+    }
+
     @Transactional
     public UserResponse updateUserProfile(User user, UserInfoRequest request) {
         User findUser = findByUserId(user.getUserId());
