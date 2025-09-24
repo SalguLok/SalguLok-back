@@ -30,6 +30,13 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             errorCode = customEx.getErrorCode();
         }
 
+        // cors 헤더 추가
+        String origin = request.getHeader("Origin");
+        if ("http://localhost:5173".equals(origin) || "https://salgulok-front.vercel.app".equals(origin)) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+        }
+
         response.setStatus(errorCode.getStatus());
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
