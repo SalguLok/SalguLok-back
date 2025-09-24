@@ -2,6 +2,7 @@ package com.salgulok.auth.service.jwt;
 
 import com.salgulok.auth.service.principal.CustomUserDetails;
 import com.salgulok.auth.service.principal.CustomUserDetailsService;
+import com.salgulok.global.exception.CustomAuthenticationException;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -28,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtManager jwtManager;
     private final TokenService tokenService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
     protected void doFilterInternal(HttpServletRequest servletRequest,
@@ -40,7 +42,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // 토큰이 블랙리스트에 있는지 확인
                 if(tokenService.isAccessTokenBlacklisted(accessToken)){
-                    throw new SalgulokException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST);
+                    authenticationEntryPoint.commence(servletRequest, servletResponse,
+                            new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST));
                 }
 
                 String userId = jwtManager.getUserIdFromClaims(accessToken);
@@ -52,10 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (ExpiredJwtException e) {
             // 토큰 만료 에러
-            throw new SalgulokException(ErrorCode.ACCESS_TOKEN_EXPIRED);
+            authenticationEntryPoint.commence(servletRequest, servletResponse,
+                    new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_EXPIRED));
         } catch (JwtException | IllegalArgumentException e) {
             // 토큰 변조 등으로 인한 토큰 유효성 에러
-            throw new SalgulokException(ErrorCode.ACCESS_TOKEN_INVALID);
+            authenticationEntryPoint.commence(servletRequest, servletResponse,
+                    new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_INVALID));
         }
 
         // 다음 필터 계속 실행
