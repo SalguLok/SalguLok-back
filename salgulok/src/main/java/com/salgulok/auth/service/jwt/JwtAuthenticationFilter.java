@@ -32,38 +32,57 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest servletRequest,
-                                    HttpServletResponse servletResponse,
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String authorization = servletRequest.getHeader("Authorization");
-            if(authorization != null){
-                String accessToken = jwtManager.substringToken(authorization);
+        String authorization = request.getHeader("Authorization");
 
-                // 토큰이 블랙리스트에 있는지 확인
-                if(tokenService.isAccessTokenBlacklisted(accessToken)){
-                    authenticationEntryPoint.commence(servletRequest, servletResponse,
-                            new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST));
-                }
-
-                String userId = jwtManager.getUserIdFromClaims(accessToken);
-
-                CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
-
-                Authentication auth = new UsernamePasswordAuthenticationToken(customUserDetails.getUser(), null, customUserDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+        if (authorization != null) {
+            try {
+                handleAuthorizationHeader(request, response, authorization);
+            } catch (CustomAuthenticationException ex) {
+                authenticationEntryPoint.commence(request, response, ex);
+                return;
             }
-        } catch (ExpiredJwtException e) {
-            // 토큰 만료 에러
-            authenticationEntryPoint.commence(servletRequest, servletResponse,
-                    new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_EXPIRED));
-        } catch (JwtException | IllegalArgumentException e) {
-            // 토큰 변조 등으로 인한 토큰 유효성 에러
-            authenticationEntryPoint.commence(servletRequest, servletResponse,
-                    new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_INVALID));
         }
 
-        // 다음 필터 계속 실행
-        filterChain.doFilter(servletRequest, servletResponse);
+        // 정상 요청만 다음 필터로 전달
+        filterChain.doFilter(request, response);
+    }
+
+    private void handleAuthorizationHeader(HttpServletRequest request,
+                                           HttpServletResponse response,
+                                           String authorization) {
+        String accessToken = jwtManager.substringToken(authorization);
+
+        checkBlacklist(accessToken, request, response);
+
+        String userId = getUserIdFromToken(accessToken);
+
+        // @AuthenticationPrincipal에 User 주입
+        CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                customUserDetails.getUser(), null, customUserDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    private void checkBlacklist(String accessToken,
+                                HttpServletRequest request,
+                                HttpServletResponse response) {
+        if (tokenService.isAccessTokenBlacklisted(accessToken)) {
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST);
+        }
+    }
+
+    private String getUserIdFromToken(String accessToken) {
+        try {
+            return jwtManager.getUserIdFromClaims(accessToken);
+        } catch (ExpiredJwtException e) {
+            // 토큰 만료 에러
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_EXPIRED);
+        } catch (JwtException | IllegalArgumentException e) {
+            // 토큰 변조 등으로 인한 토큰 유효성 에러
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_INVALID);
+        }
     }
 }
