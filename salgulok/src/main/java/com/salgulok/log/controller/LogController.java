@@ -149,6 +149,8 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    //로그 댓글 달기!!
+
     @PostMapping("/{logId}/comments")
     public ResponseEntity<Long> createComment(@AuthenticationPrincipal User user,
                                               @PathVariable Long logId,

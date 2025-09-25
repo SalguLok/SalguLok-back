@@ -244,10 +244,6 @@ public class LogService {
     public Page<LogCommentResponse> getComments(Long logId, Pageable pageable) {
         Log log = findByLogId(logId);
 
-        if (!log.getIsPublic()) {
-            throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS);
-        }
-
         return logCommentRepository.findByLogLogIdOrderByCreatedAtDesc(logId, pageable)
                 .map(LogCommentResponse::new);
     }
