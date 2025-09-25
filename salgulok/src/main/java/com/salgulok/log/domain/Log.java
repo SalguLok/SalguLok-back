@@ -40,6 +40,10 @@ public class Log {
     @OneToMany(mappedBy = "log", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<LogEntry> logEntries = new ArrayList<>();
 
+	// 삭제 시 댓글도 함께 제거
+	@OneToMany(mappedBy = "log", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	private List<LogComment> comments = new ArrayList<>();
+
     @Column(nullable = false)
     private String title;
 
