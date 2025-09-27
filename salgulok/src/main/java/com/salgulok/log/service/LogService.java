@@ -34,7 +34,7 @@ public class LogService {
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
-    private static final int LogPage_paging_size = 4; // 추후 수정예정~ 일단 테스트로 4개만
+    private static final int LogPage_paging_size = 6;
 
     @Transactional
     public Long createLog(User user, LogCreateRequest request) {
