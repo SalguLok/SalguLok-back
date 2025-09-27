@@ -14,10 +14,12 @@ public class LogPagingListResponse {
     private List<LogResponse> logs;
     private int totalPages;
     private int currentPage;
+    private int length;
 
     public LogPagingListResponse(Page<Log> page) {
         this.logs = page.stream().map(LogResponse::from).collect(Collectors.toList());
         this.totalPages = page.getTotalPages();
         this.currentPage = page.getNumber();
+        this.length = page.getNumberOfElements();
     }
 }
