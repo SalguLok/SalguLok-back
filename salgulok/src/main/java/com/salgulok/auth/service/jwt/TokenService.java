@@ -18,23 +18,25 @@ public class TokenService {
     private static final String REFRESH_PREFIX = "refresh:";
     private static final String BLACKLIST_PREFIX = "blacklist:";
 
-    public void saveToken(Long userId, String refreshToken, long expireMillis) {
-        String key = REFRESH_PREFIX + userId;
+    public void saveRefreshToken(Long userId, String refreshToken, long expireMillis) {
+        String key = REFRESH_PREFIX + userId + ":" + refreshToken;
         try{
-            stringRedisTemplate.opsForValue().set(key, refreshToken, Duration.ofMillis(expireMillis));
+            // 여러 기기 로그인 경우도 고려하여 refreshToken값도 key값으로 들어가도록 수정
+            stringRedisTemplate.opsForValue().set(key, "true", Duration.ofMillis(expireMillis));
         } catch (Exception e){
             log.error("redis error", e);
             throw new SalgulokException(ErrorCode.REDIS_SAVE_ERROR);
         }
     }
 
-    public String getToken(Long userId){
-        String key = REFRESH_PREFIX + userId;
-        return stringRedisTemplate.opsForValue().get(key);
+    public boolean existsRefreshToken(Long userId, String refreshToken) {
+        String key = REFRESH_PREFIX + userId + ":" + refreshToken;
+        Boolean exists = stringRedisTemplate.hasKey(key);
+        return exists != null && exists;
     }
 
-    public void deleteToken(Long userId){
-        String key = REFRESH_PREFIX + userId;
+    public void deleteRefreshToken(Long userId, String refreshToken){
+        String key = REFRESH_PREFIX + userId + ":" + refreshToken;
         try{
             stringRedisTemplate.delete(key);
         } catch (Exception e){

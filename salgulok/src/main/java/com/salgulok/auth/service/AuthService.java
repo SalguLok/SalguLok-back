@@ -14,7 +14,6 @@ import com.salgulok.auth.service.jwt.TokenService;
 import com.salgulok.auth.service.kakao.KakaoService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,14 +58,17 @@ public class AuthService {
         return new LoginResponse(accessToken, isNewUser, user.getUserId());
     }
 
-    public ReissueResponse reissue(String cookieRefreshToken, HttpServletResponse response) {
+    public ReissueResponse reissue(String cookieRefreshToken) {
         try {
+            if (cookieRefreshToken == null) {
+                throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+            }
+
             // jwt 만료 체크 포함 -> 만료시 ExpiredJwtException 에러로 걸림
             Long userId = Long.parseLong(jwtManager.getUserIdFromClaims(cookieRefreshToken));
 
-            // Redis의 refreshToken과 일치하는지 확인
-            String redisRefreshToken = tokenService.getToken(userId);
-            if (redisRefreshToken == null || !redisRefreshToken.equals(cookieRefreshToken)) {
+            // 존재하는 refreshToken 없는 경우
+            if (!tokenService.existsRefreshToken(userId, cookieRefreshToken)) {
                 throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
             }
 
@@ -79,12 +81,14 @@ public class AuthService {
         }
     }
 
-    public void logout(User user, String accessToken, HttpServletResponse response) {
-        tokenService.deleteToken(user.getUserId());
+    public void logout(User user, String accessToken, String refreshToken, HttpServletResponse response) {
+        tokenService.deleteRefreshToken(user.getUserId(), refreshToken);
 
-        accessToken = jwtManager.substringToken(accessToken);
-        long expireMillis = jwtManager.getExpiration(accessToken); // 남은 만료 시간(ms) redis TTL 설정
-        tokenService.saveBlacklist(accessToken, expireMillis);
+        if(accessToken != null){
+            accessToken = jwtManager.substringToken(accessToken);
+            long expireMillis = jwtManager.getExpiration(accessToken); // 남은 만료 시간(ms) redis TTL 설정
+            tokenService.saveBlacklist(accessToken, expireMillis);
+        }
 
         // 저장된 쿠키 삭제
         addRefreshTokenCookie(response, null);
@@ -95,7 +99,7 @@ public class AuthService {
         String accessToken = jwtManager.createAccessToken(user.getUserId());
         String refreshToken = jwtManager.createRefreshToken(user.getUserId());
 
-        tokenService.saveToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
+        tokenService.saveRefreshToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
 
         // 클라이언트 쿠키에 Refresh Token 저장
         addRefreshTokenCookie(response, refreshToken);
@@ -110,7 +114,7 @@ public class AuthService {
                 .secure(true)     // HTTPS 전용
                 .sameSite("None") // 크로스 도메인 허용
                 .path("/")
-                .maxAge(jwtUtils.getRefreshTokenSeconds())
+                .maxAge(refreshToken == null ? 0 : jwtUtils.getRefreshTokenSeconds())
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
