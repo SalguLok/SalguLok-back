@@ -115,4 +115,9 @@ public class Log {
         this.isUpload = upload;
     }
 
+    public void setOneReview(String oneReview) { // null 허용
+        this.oneReview = oneReview;
+    }
+
+
 }
