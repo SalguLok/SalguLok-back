@@ -4,10 +4,11 @@ import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.domain.LogComment;
-import com.salgulok.log.dto.request.LogCheckRequest;
-import com.salgulok.log.dto.request.LogCommentCreateRequest;
-import com.salgulok.log.dto.request.LogCreateRequest;
-import com.salgulok.log.dto.request.LogUpdateRequest;
+//import com.salgulok.log.dto.request.LogCheckRequest;
+//import com.salgulok.log.dto.request.LogCommentCreateRequest;
+//import com.salgulok.log.dto.request.LogCreateRequest;
+//import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.repository.LogCommentRepository;
 import com.salgulok.log.repository.LogRepository;
@@ -259,21 +260,13 @@ public class LogService {
         logCommentRepository.delete(comment);
     }
 
-//    @Transactional(readOnly = true)
-//    public LogListResponse getLogBySearch(String search) {
-//        var list = logRepository
-//                .findByTitleContainingAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(search)
-//                .stream().map(LogResponse::from).toList();
-//        return new LogListResponse(list);
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public LogListResponse getLogByRegion(Long regionId) {
-//        Region region = findByRegionId(regionId);
-//        var list = logRepository
-//                .findByRegionAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(region)
-//                .stream().map(LogResponse::from).toList();
-//        return new LogListResponse(list);
-//    }
+    // 한 줄 평 업로드
+    @Transactional
+    public void updateReview(User user, Long logId, LogReviewUpdateRequest request) {
+        Log log = findByLogId(logId);
+        authorizeUser(user, log);
+        log.setOneReview(request.getOneReview()); // null이면 비우기
+    }
+
 
 }

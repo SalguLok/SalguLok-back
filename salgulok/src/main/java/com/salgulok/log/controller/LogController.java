@@ -1,10 +1,10 @@
 package com.salgulok.log.controller;
 
-import com.salgulok.log.dto.request.LogCheckRequest;
-import com.salgulok.log.dto.request.LogCommentCreateRequest;
-import com.salgulok.log.dto.request.LogCreateRequest;
-import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.request.LogUploadUpdateRequest;
+//import com.salgulok.log.dto.request.LogCheckRequest;
+//import com.salgulok.log.dto.request.LogCommentCreateRequest;
+//import com.salgulok.log.dto.request.LogCreateRequest;
+//import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
@@ -171,5 +171,16 @@ public class LogController {
         logService.deleteComment(user, logId, commentId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{logId}/review")
+    public ResponseEntity<Void> updateReview(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long logId,
+            @RequestBody LogReviewUpdateRequest request
+    ) {
+        logService.updateReview(user, logId, request);
+        return ResponseEntity.ok().build();
+    }
+
 
 }
