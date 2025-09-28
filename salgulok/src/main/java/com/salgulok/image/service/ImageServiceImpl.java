@@ -119,7 +119,8 @@ public class ImageServiceImpl implements ImageService {
                 .fileName(null) // 다운로드할 때만 필요하면 세팅
                 .objectKey(objectKey)
                 .presignedUrl(presigned.url().toString())
-                .contentType("image/*")
+                // GET presigned URL은 헤더 없는 <img src> 요청을 지원해야 하므로 contentType은 서명/헤더에 포함하지 않음
+                .contentType(null)
                 .expiresInSec(Duration.ofMinutes(5).toSeconds())
                 .build();
 
