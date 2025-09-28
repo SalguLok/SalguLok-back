@@ -119,6 +119,12 @@ public class LogController {
     }
 
     // 좋아요 로직
+    @GetMapping("/{logId}/likes")
+    public ResponseEntity<Long> getLikeCount(@PathVariable Long logId) {
+        Long likeCount = logService.getLikeCount(logId);
+        return ResponseEntity.ok(likeCount);
+    }
+
     @PostMapping("/{logId}/likes")
     public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,
                                              @PathVariable Long logId) {
