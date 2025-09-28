@@ -27,10 +27,12 @@ public enum ErrorCode {
     INVALID_DATE_RANGE(400, "시작날짜는 종료일보다 이전이어야 합니다."),
 
     // logEntry
+    LOG_ENTRY_NOT_FOUND(404, "존재하는 하루 기록이 없습니다."),
     TEMPLATE_NOT_FOUND(404, "존재하는 템플릿이 없습니다."),
     PLACE_NOT_FOUND(404,"장소가 존재하지 않습니다" ),
     INVALID_REQUEST(400,"별점이 유효하지 않은 형식입니다"),
     LOG_ENTRY_NOT_IN_LOG(400, "해당 살구록에 존재하지 않는 하루 기록입니다."),
+
     // image
     IMAGE_NOT_FOUND(404, "존재하는 이미지가 없습니다.");
 

@@ -45,7 +45,7 @@ public class LogEntryService {
     private final ImageUrlResolver imageUrlResolver;
 
     @Transactional
-    public Long createLogEntry(User user, Long logId, LogEntryCreateRequest request) {
+    public LogEntryCreateResponse createLogEntry(User user, Long logId, LogEntryCreateRequest request) {
         Log log = logRepository.findById(logId)
                 .orElseThrow(() -> new SalgulokException(ErrorCode.SALGULOG_NOT_FOUND));
 
@@ -67,7 +67,7 @@ public class LogEntryService {
 
         for (int i = 0; i < savedTemplates.size(); i++) {
             Template savedTemplate = savedTemplates.get(i);
-            TemplateCreateRequest tReq = request.getTemplates().get(i);
+            com.salgulok.logEntry.dto.request.TemplateCreateRequest tReq = request.getTemplates().get(i);
 
             // 1) 신규 권장: imageIds 기반 attach
             attachTemplateImagesByIds(user, savedTemplate, tReq.getImageIds());
@@ -88,7 +88,50 @@ public class LogEntryService {
         for (Long pid : affectedPlaceIds) {
             placeService.recalcAndUpdateRating(pid);
         }
-        return logEntry.getLogEntryId();
+
+        List<TemplateResponse> templateResponses = savedTemplates.stream()
+                .map(template -> {
+                    List<TemplateImage> images = templateImageRepository.findAllByTemplate_TemplateId(template.getTemplateId());
+                    return TemplateResponse.of(template, images, imageUrlResolver);
+                })
+                .collect(Collectors.toList());
+
+        return LogEntryCreateResponse.builder()
+                .entryId(logEntry.getLogEntryId())
+                .entryDate(logEntry.getEntryDate())
+                .templates(templateResponses)
+                .build();
+    }
+
+    @Transactional
+    public TemplateCreateResponse addTemplateToEntry(User user, Long logId, Long entryId, TemplateCreateRequest request) {
+        LogEntry logEntry = logEntryRepository.findById(entryId)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.LOG_ENTRY_NOT_FOUND));
+
+        validateLogEntryOwnership(logId, logEntry);
+        // TODO: user 권한 검사
+
+        Template template = new Template(
+                logEntry,
+                request.getPlaceId(),
+                request.getText(),
+                request.getStar()
+        );
+        templateRepository.save(template);
+
+        // 1) 신규 권장: imageIds 기반 attach
+        attachTemplateImagesByIds(user, template, request.getImageIds());
+
+        // 2) 호환: 예전 images가 있으면 사용
+        if ((request.getImageIds() == null || request.getImageIds().isEmpty())
+                && request.getImages() != null && !request.getImages().isEmpty()) {
+            attachTemplateImagesLegacy(template, request.getImages());
+        }
+
+        placeService.recalcAndUpdateRating(template.getPlaceId());
+
+        List<TemplateImage> images = templateImageRepository.findAllByTemplate_TemplateId(template.getTemplateId());
+        return TemplateCreateResponse.of(template, images, imageUrlResolver);
     }
 
 
@@ -347,11 +390,13 @@ public class LogEntryService {
                     .star(t.getStar())
                     .images(imgs.stream().map(i -> {
                         String resolvedUrl = imageUrlResolver.resolveUrlOrDefault(i.getImageUrl(), i.getObjectKey());
+                        String presignedUrl = imageUrlResolver.createPresignedGetUrl(i.getObjectKey());
                         return LogEntryDetailResponse.ImageSummary.builder()
                                 .imageId(i.getTemplateImageId())
                                 .objectKey(i.getObjectKey())
                                 .imageUrl(i.getImageUrl())
                                 .resolvedUrl(resolvedUrl)
+                                .presignedUrl(presignedUrl)
                                 .build();
                     }).toList())
                     .build();
