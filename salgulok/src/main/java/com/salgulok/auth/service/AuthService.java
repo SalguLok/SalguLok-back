@@ -1,16 +1,24 @@
 package com.salgulok.auth.service;
 
+import com.salgulok.auth.dto.response.LoginResponse;
+import com.salgulok.auth.dto.response.ReissueResponse;
+import com.salgulok.auth.service.jwt.JwtUtils;
+import com.salgulok.global.exception.ErrorCode;
+import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.user.domain.User;
 import com.salgulok.auth.dto.request.KakaoCodeRequest;
-import com.salgulok.auth.dto.response.JwtTokenResponse;
 import com.salgulok.auth.dto.summary.KakaoUserInfo;
 import com.salgulok.user.repository.UserRepository;
 import com.salgulok.auth.service.jwt.JwtManager;
-import com.salgulok.auth.service.jwt.RefreshTokenService;
+import com.salgulok.auth.service.jwt.TokenService;
 import com.salgulok.auth.service.kakao.KakaoService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,32 +29,94 @@ public class AuthService {
 
     private final KakaoService kakaoService;
     private final JwtManager jwtManager;
-    private final RefreshTokenService refreshTokenService;
+    private final JwtUtils jwtUtils;
+    private final TokenService tokenService;
     private final UserRepository userRepository;
 
     @Transactional
-    public JwtTokenResponse kakaoLoginOrSignUp(KakaoCodeRequest request, HttpServletResponse response){
-        String kakaoAccessToken = request.getCode();
-        KakaoUserInfo userInfo = kakaoService.getKakaoIdFromAccessToken(kakaoAccessToken);
+    public LoginResponse kakaoLoginOrSignUp(KakaoCodeRequest request, HttpServletResponse response){
+        String authorizationCode = request.getCode();
+        KakaoUserInfo userInfo = kakaoService.getUserInfoFromAccessToken(authorizationCode);
+
         Long kakaoId = userInfo.getKakaoId();
+        User user = userRepository.findByKakaoId(kakaoId).orElse(null);
+        boolean isNewUser = false;
 
         // 존재하는 회원이 없으면 회원 저장 후 토큰 발급
-        User user = userRepository.findByKakaoId(kakaoId)
-                .orElseGet(() -> {
-                    User newUser = User.builder()
-                            .kakaoId(kakaoId)
-                            .build();
-                    return userRepository.save(newUser);
-                });
+        if (user == null) {
+            isNewUser = true;
+            user = userRepository.save(User.builder()
+                    .kakaoId(kakaoId)
+                    .build());
+        } else {
+            if (user.getUsername() == null || user.getUsername().isEmpty()){
+                isNewUser = true;
+            }
+        }
 
-        return createTokens(user, response);
+        String accessToken = createTokens(user, response);
+        return new LoginResponse(accessToken, isNewUser, user.getUserId());
     }
 
-    private JwtTokenResponse createTokens(User user, HttpServletResponse response){
-        String accessToken = jwtManager.createAccessToken(user);
-        String refreshToken = jwtManager.createRefreshToken(user);
+    public ReissueResponse reissue(String cookieRefreshToken) {
+        try {
+            if (cookieRefreshToken == null) {
+                throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+            }
 
-        refreshTokenService.save(user, refreshToken); // refresh token Redis에 저장
-        return new JwtTokenResponse(accessToken, refreshToken, user.getUserId());
+            // jwt 만료 체크 포함 -> 만료시 ExpiredJwtException 에러로 걸림
+            Long userId = Long.parseLong(jwtManager.getUserIdFromClaims(cookieRefreshToken));
+
+            // 존재하는 refreshToken 없는 경우
+            if (!tokenService.existsRefreshToken(userId, cookieRefreshToken)) {
+                throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+            }
+
+            String accessToken = jwtManager.createAccessToken(userId);
+            return new ReissueResponse(accessToken);
+        } catch (ExpiredJwtException e) {
+            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new SalgulokException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
+    }
+
+    public void logout(User user, String accessToken, String refreshToken, HttpServletResponse response) {
+        tokenService.deleteRefreshToken(user.getUserId(), refreshToken);
+
+        if(accessToken != null){
+            accessToken = jwtManager.substringToken(accessToken);
+            long expireMillis = jwtManager.getExpiration(accessToken); // 남은 만료 시간(ms) redis TTL 설정
+            tokenService.saveBlacklist(accessToken, expireMillis);
+        }
+
+        // 저장된 쿠키 삭제
+        addRefreshTokenCookie(response, null);
+    }
+
+    // accessToken 및 refreshToken 생성
+    private String createTokens(User user, HttpServletResponse response){
+        String accessToken = jwtManager.createAccessToken(user.getUserId());
+        String refreshToken = jwtManager.createRefreshToken(user.getUserId());
+
+        tokenService.saveRefreshToken(user.getUserId(), refreshToken, jwtUtils.getRefreshTokenMillis()); // refresh token Redis에 저장
+
+        // 클라이언트 쿠키에 Refresh Token 저장
+        addRefreshTokenCookie(response, refreshToken);
+
+        return accessToken;
+    }
+
+    // refresh Token용 쿠키 설정
+    private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)   // JS 접근 불가
+                .secure(true)     // HTTPS 전용
+                .sameSite("None") // 크로스 도메인 허용
+                .path("/")
+                .maxAge(refreshToken == null ? 0 : jwtUtils.getRefreshTokenSeconds())
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 }

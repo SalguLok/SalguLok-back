@@ -68,6 +68,7 @@ public class ImageMeta {
         this.status = Status.ATTACHED;
     }
 
+
     public void updateThumbnailInfo(String key, String url) {
         this.thumbnailObjectKey = key;
         this.thumbnailUrl = url;
@@ -85,4 +86,7 @@ public class ImageMeta {
     public enum Status {CONFIRMED, ATTACHED}
 
     public enum ThumbnailStatus {EMPTY, PENDING, DONE, FAILED}
+
 }
+
+

@@ -20,7 +20,7 @@ public class KakaoService {
     private final KakaoUtils kakaoUtils;
     private final RestClient restClient;
 
-    public KakaoUserInfo getKakaoIdFromAccessToken(String kakaoAccessToken) {
+    public KakaoUserInfo getUserInfoFromAccessToken(String kakaoAccessToken) {
         KakaoTokenResponse accessTokenFromKakao = getAccessTokenFromKakao(kakaoAccessToken);
 
         String userInfoUrl = kakaoUtils.getUserInfoUrl();
