@@ -49,6 +49,17 @@ public class ImageMeta {
     @Column(name = "status", nullable = false, length = 32)
     private Status status; // CONFIRMED, ATTACHED
 
+    @Column(name = "thumbnail_object_key", length = 512)
+    private String thumbnailObjectKey;
+
+    @Column(name = "thumbnail_url", length = 1024)
+    private String thumbnailUrl;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "thumbnail_status", length = 32)
+    private ThumbnailStatus thumbnailStatus = ThumbnailStatus.EMPTY;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -57,5 +68,21 @@ public class ImageMeta {
         this.status = Status.ATTACHED;
     }
 
-    public enum Status { CONFIRMED, ATTACHED }
+    public void updateThumbnailInfo(String key, String url) {
+        this.thumbnailObjectKey = key;
+        this.thumbnailUrl = url;
+        this.thumbnailStatus = ThumbnailStatus.DONE;
+    }
+
+    public void markThumbnailFailed() {
+        this.thumbnailStatus = ThumbnailStatus.FAILED;
+    }
+
+    public void markThumbnailPending() {
+        this.thumbnailStatus = ThumbnailStatus.PENDING;
+    }
+
+    public enum Status {CONFIRMED, ATTACHED}
+
+    public enum ThumbnailStatus {EMPTY, PENDING, DONE, FAILED}
 }

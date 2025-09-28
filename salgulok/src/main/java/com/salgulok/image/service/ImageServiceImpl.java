@@ -7,6 +7,7 @@ import com.salgulok.image.dto.response.ImageConfirmResponse;
 import com.salgulok.image.dto.response.PresignedUrlResponse;
 import com.salgulok.image.infra.ImageUrlResolver;
 import com.salgulok.image.repository.ImageMetaRepository;
+import com.salgulok.image.service.async.ImageResizeService;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,7 @@ public class ImageServiceImpl implements ImageService {
     private final S3Presigner s3Presigner;
     private final ImageMetaRepository imageMetaRepository;
     private final ImageUrlResolver imageUrlResolver;
+    private final ImageResizeService imageResizeService;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -161,6 +163,12 @@ public class ImageServiceImpl implements ImageService {
                                     .status(ImageMeta.Status.CONFIRMED)
                                     .build()
                     ));
+
+            // 썸네일 생성
+            if (meta.getThumbnailStatus() == ImageMeta.ThumbnailStatus.EMPTY) {
+                meta.markThumbnailPending();
+                imageResizeService.resizeAndUpload(meta.getId());
+            }
 
             ids.add(meta.getId());
         }
