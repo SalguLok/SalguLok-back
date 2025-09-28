@@ -179,6 +179,13 @@ public class LogService {
         return new LogDateCheckResponse(false);
     }
 
+    // 좋아요 수 반환
+    @Transactional(readOnly = true)
+    public Long getLikeCount(Long logId) {
+        Log log = findByLogId(logId);
+        return log.getLikes(); // Long 그대로 반환
+    }
+
     @Transactional
     public void increaseLikeCount(Long logId, User user) {
         Log log = findByLogId(logId);
