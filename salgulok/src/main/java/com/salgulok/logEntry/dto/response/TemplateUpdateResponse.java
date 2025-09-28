@@ -2,6 +2,7 @@ package com.salgulok.logEntry.dto.response;
 
 import com.salgulok.logEntry.domain.Template;
 import com.salgulok.logEntry.domain.TemplateImage;
+import com.salgulok.image.infra.ImageUrlResolver;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,6 +23,7 @@ public class TemplateUpdateResponse {
         private Long imageId;
         private String objectKey;
         private String imageUrl;
+        private String resolvedUrl; // 표준화된 URL (프론트는 이 값만 사용)
     }
 
     public static TemplateUpdateResponse of(Template t, List<TemplateImage> imgs) {
@@ -30,13 +32,34 @@ public class TemplateUpdateResponse {
                 .placeId(t.getPlaceId())
                 .text(t.getText())
                 .star(t.getStar())
-                .images(imgs.stream().map(i ->
-                        ImageSummary.builder()
-                                .imageId(i.getTemplateImageId())
-                                .objectKey(i.getObjectKey())
-                                .imageUrl(i.getImageUrl())
-                                .build()
-                ).toList())
+                .images(imgs.stream().map(i -> {
+                    // resolvedUrl은 서비스에서 주입받아야 하므로 여기서는 null로 설정
+                    // 실제 사용 시에는 서비스에서 ImageUrlResolver로 생성해서 주입
+                    return ImageSummary.builder()
+                            .imageId(i.getTemplateImageId())
+                            .objectKey(i.getObjectKey())
+                            .imageUrl(i.getImageUrl())
+                            .resolvedUrl(null) // 서비스에서 주입 필요
+                            .build();
+                }).toList())
+                .build();
+    }
+
+    public static TemplateUpdateResponse of(Template t, List<TemplateImage> imgs, ImageUrlResolver urlResolver) {
+        return TemplateUpdateResponse.builder()
+                .templateId(t.getTemplateId())
+                .placeId(t.getPlaceId())
+                .text(t.getText())
+                .star(t.getStar())
+                .images(imgs.stream().map(i -> {
+                    String resolvedUrl = urlResolver.resolveUrlOrDefault(i.getImageUrl(), i.getObjectKey());
+                    return ImageSummary.builder()
+                            .imageId(i.getTemplateImageId())
+                            .objectKey(i.getObjectKey())
+                            .imageUrl(i.getImageUrl())
+                            .resolvedUrl(resolvedUrl)
+                            .build();
+                }).toList())
                 .build();
     }
 }

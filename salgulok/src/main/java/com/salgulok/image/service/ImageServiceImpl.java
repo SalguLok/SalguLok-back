@@ -5,6 +5,7 @@ import com.salgulok.image.dto.request.ImageConfirmRequest;
 import com.salgulok.image.dto.request.PresignedUrlRequest;
 import com.salgulok.image.dto.response.ImageConfirmResponse;
 import com.salgulok.image.dto.response.PresignedUrlResponse;
+import com.salgulok.image.infra.ImageUrlResolver;
 import com.salgulok.image.repository.ImageMetaRepository;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ImageServiceImpl implements ImageService {
 
     private final S3Presigner s3Presigner;
     private final ImageMetaRepository imageMetaRepository;
+    private final ImageUrlResolver imageUrlResolver;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -141,6 +143,9 @@ public class ImageServiceImpl implements ImageService {
                 throw new IllegalArgumentException("objectKey is required");
             }
 
+            // URL이 없으면 objectKey로 자동 생성
+            String resolvedUrl = imageUrlResolver.resolveUrlOrDefault(item.getUrl(), item.getObjectKey());
+
             // 멱등 처리: (user, objectKey) 중복 confirm 시 기존 레코드 재사용
             var meta = imageMetaRepository
                     .findByUser_UserIdAndObjectKey(userId, item.getObjectKey())
@@ -148,7 +153,7 @@ public class ImageServiceImpl implements ImageService {
                             ImageMeta.builder()
                                     .user(user)
                                     .objectKey(item.getObjectKey())
-                                    .url(item.getUrl())
+                                    .url(resolvedUrl) // 자동 생성된 URL 사용
                                     .fileName(item.getFileName())
                                     .contentType(item.getContentType())
                                     .size(item.getSize())
