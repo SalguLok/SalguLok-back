@@ -24,6 +24,7 @@ public class TemplateUpdateResponse {
         private String objectKey;
         private String imageUrl;
         private String resolvedUrl; // 표준화된 URL (프론트는 이 값만 사용)
+        private String presignedUrl; // S3 private 버킷 접근용 presigned URL
     }
 
     public static TemplateUpdateResponse of(Template t, List<TemplateImage> imgs) {
@@ -33,13 +34,14 @@ public class TemplateUpdateResponse {
                 .text(t.getText())
                 .star(t.getStar())
                 .images(imgs.stream().map(i -> {
-                    // resolvedUrl은 서비스에서 주입받아야 하므로 여기서는 null로 설정
+                    // resolvedUrl과 presignedUrl은 서비스에서 주입받아야 하므로 여기서는 null로 설정
                     // 실제 사용 시에는 서비스에서 ImageUrlResolver로 생성해서 주입
                     return ImageSummary.builder()
                             .imageId(i.getTemplateImageId())
                             .objectKey(i.getObjectKey())
                             .imageUrl(i.getImageUrl())
                             .resolvedUrl(null) // 서비스에서 주입 필요
+                            .presignedUrl(null) // 서비스에서 주입 필요
                             .build();
                 }).toList())
                 .build();
@@ -53,11 +55,13 @@ public class TemplateUpdateResponse {
                 .star(t.getStar())
                 .images(imgs.stream().map(i -> {
                     String resolvedUrl = urlResolver.resolveUrlOrDefault(i.getImageUrl(), i.getObjectKey());
+                    String presignedUrl = urlResolver.createPresignedGetUrl(i.getObjectKey());
                     return ImageSummary.builder()
                             .imageId(i.getTemplateImageId())
                             .objectKey(i.getObjectKey())
                             .imageUrl(i.getImageUrl())
                             .resolvedUrl(resolvedUrl)
+                            .presignedUrl(presignedUrl)
                             .build();
                 }).toList())
                 .build();

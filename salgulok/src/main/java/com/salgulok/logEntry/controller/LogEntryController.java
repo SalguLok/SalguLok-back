@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.salgulok.logEntry.dto.request.TemplateCreateRequest;
+import com.salgulok.logEntry.dto.response.LogEntryCreateResponse;
+import com.salgulok.logEntry.dto.response.TemplateCreateResponse;
 import java.net.URI;
 
 @RestController
@@ -21,14 +24,26 @@ public class LogEntryController {
     private final LogEntryService logEntryService;
 
     @PostMapping
-    public ResponseEntity<Void> createLogEntry(
+    public ResponseEntity<LogEntryCreateResponse> createLogEntry(
             @AuthenticationPrincipal User user,
             @PathVariable Long logId,
             @RequestBody @Valid LogEntryCreateRequest request
     ) {
-        Long entryId = logEntryService.createLogEntry(user, logId, request);
-        URI location = URI.create(String.format("/logs/%d/entries/%d", logId, entryId));
-        return ResponseEntity.created(location).build();
+        LogEntryCreateResponse response = logEntryService.createLogEntry(user, logId, request);
+        URI location = URI.create(String.format("/logs/%d/entries/%d", logId, response.getEntryId()));
+        return ResponseEntity.created(location).body(response);
+    }
+
+    @PostMapping("/{entryId}/templates")
+    public ResponseEntity<TemplateCreateResponse> addTemplateToEntry(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long logId,
+            @PathVariable Long entryId,
+            @RequestBody @Valid TemplateCreateRequest request
+    ) {
+        TemplateCreateResponse response = logEntryService.addTemplateToEntry(user, logId, entryId, request);
+        URI location = URI.create(String.format("/logs/%d/entries/%d/templates/%d", logId, entryId, response.getTemplateId()));
+        return ResponseEntity.created(location).body(response);
     }
 
     @PutMapping("/{entryId}")
