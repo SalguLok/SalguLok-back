@@ -28,6 +28,7 @@ import java.time.LocalDate;
 
 import com.salgulok.logEntry.dto.response.DayFillState;
 import com.salgulok.logEntry.dto.response.FillCalendarResponse;
+import com.salgulok.image.infra.ImageUrlResolver;
 
 
 @Service
@@ -42,6 +43,7 @@ public class LogEntryService {
     private final PlaceService placeService;
 
     private final PlaceRepository placeRepository;
+    private final ImageUrlResolver imageUrlResolver;
 
     @Transactional
     public Long createLogEntry(User user, Long logId, LogEntryCreateRequest request) {
@@ -162,7 +164,7 @@ public class LogEntryService {
         List<TemplateImage> imgs =
                 templateImageRepository.findAllByTemplate_TemplateId(template.getTemplateId());
 
-        return TemplateUpdateResponse.of(template, imgs);
+        return TemplateUpdateResponse.of(template, imgs, imageUrlResolver);
     }
 
 
@@ -344,13 +346,15 @@ public class LogEntryService {
                     .placeName(placeName)
                     .text(t.getText())
                     .star(t.getStar())
-                    .images(imgs.stream().map(i ->
-                            LogEntryDetailResponse.ImageSummary.builder()
-                                    .imageId(i.getTemplateImageId())
-                                    .objectKey(i.getObjectKey())
-                                    .imageUrl(i.getImageUrl())
-                                    .build()
-                    ).toList())
+                    .images(imgs.stream().map(i -> {
+                        String resolvedUrl = imageUrlResolver.resolveUrlOrDefault(i.getImageUrl(), i.getObjectKey());
+                        return LogEntryDetailResponse.ImageSummary.builder()
+                                .imageId(i.getTemplateImageId())
+                                .objectKey(i.getObjectKey())
+                                .imageUrl(i.getImageUrl())
+                                .resolvedUrl(resolvedUrl)
+                                .build();
+                    }).toList())
                     .build();
         }).toList();
 
@@ -422,10 +426,18 @@ public class LogEntryService {
                     .existsByTemplate_TemplateIdAndObjectKey(template.getTemplateId(), meta.getObjectKey());
             if (exists) continue;
 
+            // objectKey 방어: 필수 값
+            if (meta.getObjectKey() == null || meta.getObjectKey().isBlank()) {
+                throw new SalgulokException(ErrorCode.INVALID_REQUEST, "image objectKey is required");
+            }
+
+            // URL resolver로 표준화된 URL 생성 (기존 URL이 있으면 사용, 없으면 objectKey로 생성)
+            String resolvedUrl = imageUrlResolver.resolveUrlOrDefault(meta.getUrl(), meta.getObjectKey());
+
             TemplateImage ti = new TemplateImage(
                     template,
                     meta.getObjectKey(),
-                    meta.getUrl(),
+                    resolvedUrl,
                     meta.getFileName(),
                     meta.getContentType(),
                     meta.getSize()
