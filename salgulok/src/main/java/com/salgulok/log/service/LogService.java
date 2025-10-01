@@ -217,6 +217,15 @@ public class LogService {
         log.decreaseLikes();
     }
 
+    @Transactional(readOnly = true)
+    public boolean isLikedByUser(User user, Long logId) {
+        if (user == null) {
+            return false;
+        }
+        Log log = findByLogId(logId);
+        return logLikeRepository.existsByUserAndLog(user, log);
+    }
+
     @Transactional
     public void updateUploadStatus(User user, Long logId, Boolean isUpload) {
         Log log = findByLogId(logId);
