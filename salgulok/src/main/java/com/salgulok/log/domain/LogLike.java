@@ -1,0 +1,48 @@
+package com.salgulok.log.domain;
+
+import com.salgulok.user.domain.User;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+
+import static lombok.AccessLevel.PROTECTED;
+
+@Entity
+@Getter
+@Table(
+        name = "log_likes",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "ux_log_like_user_log", columnNames = {"user_id", "log_id"})
+        }
+)
+@EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor(access = PROTECTED)
+public class LogLike {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "log_id", nullable = false)
+    private Log log;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    public LogLike(User user, Log log) {
+        this.user = user;
+        this.log = log;
+    }
+}
+
+

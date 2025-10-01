@@ -4,14 +4,14 @@ import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.domain.LogComment;
-//import com.salgulok.log.dto.request.LogCheckRequest;
-//import com.salgulok.log.dto.request.LogCommentCreateRequest;
-//import com.salgulok.log.dto.request.LogCreateRequest;
-//import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.domain.LogLike;
+
 import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.repository.LogCommentRepository;
+import com.salgulok.log.repository.LogLikeRepository;
 import com.salgulok.log.repository.LogRepository;
+
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
@@ -31,6 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LogService {
     private final LogRepository logRepository;
+    private final LogLikeRepository logLikeRepository;
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
     private static final int LogPage_paging_size = 4; // 추후 수정예정~ 일단 테스트로 4개만
@@ -60,14 +61,15 @@ public class LogService {
 
         Region updateRegion = findByRegionId(request.getRegionId());
         Log updateLog = log.updateLog(request, updateRegion);
-        return LogResponse.from(updateLog);
+        boolean isLiked = logLikeRepository.existsByUserAndLog(user, log);
+        return LogResponse.from(updateLog, isLiked);
     }
 
     @Transactional(readOnly = true)
     public LogPagingListResponse getMyLog(User user, int page) {
         Pageable pageable = PageRequest.of(page, LogPage_paging_size);
         Page<Log> logs = logRepository.findByUserOrderByCreatedAtDesc(user, pageable);
-        return new LogPagingListResponse(logs);
+        return new LogPagingListResponse(logs.map(log -> LogResponse.from(log, logLikeRepository.existsByUserAndLog(user, log))));
     }
 
     @Transactional(readOnly = true)
@@ -75,13 +77,13 @@ public class LogService {
         Region region = findByRegionId(id);
         List<Log> logs = logRepository.findByRegionAndIsPublicTrueAndIsUploadTrue(region);
         return new LogListResponse(logs.stream()
-                .map(LogResponse::from)
+                .map(log -> LogResponse.from(log, false)) // 로그인 안한 유저이므로 false
                 .collect(Collectors.toList()));
     }
 
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @Transactional(readOnly = true)
-    public LogPagingListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page) {
+    public LogPagingListResponse getLogBySearchAndFiltering(String search, String sort, Long regionId, int page, User user) {
         Sort sortOption;
 
         // 최신순, 조회순, 좋아요순 소팅
@@ -117,7 +119,10 @@ public class LogService {
             }
         }
 
-        return new LogPagingListResponse(logs);
+        return new LogPagingListResponse(logs.map(log -> {
+            boolean isLiked = user != null && logLikeRepository.existsByUserAndLog(user, log);
+            return LogResponse.from(log, isLiked);
+        }));
     }
 
 
@@ -144,9 +149,12 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public List<LogResponse> getLogsByUser(Long userId) {
+    public List<LogResponse> getLogsByUser(Long userId, User currentUser) {
         return logRepository.findByUser_UserId(userId)
-                .stream().map(LogResponse::from).collect(Collectors.toList());
+                .stream().map(log -> {
+                    boolean isLiked = currentUser != null && logLikeRepository.existsByUserAndLog(currentUser, log);
+                    return LogResponse.from(log, isLiked);
+                }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -154,18 +162,19 @@ public class LogService {
         Log log = findByLogId(logId);
 
         // 본인 로그가 아니고 비공개면 접근 제한
-        if (!log.getIsPublic() && !log.getUser().getUserId().equals(user.getUserId())) {
+        if (!log.getIsPublic() && (user == null || !log.getUser().getUserId().equals(user.getUserId()))) {
             throw new SalgulokException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
 
-        return LogResponse.from(log);
+        boolean isLiked = user != null && logLikeRepository.existsByUserAndLog(user, log);
+        return LogResponse.from(log, isLiked);
     }
 
     @Transactional
     public void increaseViewCount(Long logId, User user) {
         Log log = findByLogId(logId);
         // 본인 글은 조회수 증가 안함
-        if (!log.getUser().getUserId().equals(user.getUserId())) {
+        if (user != null && !log.getUser().getUserId().equals(user.getUserId())) {
             log.increaseView();
         }
     }
@@ -189,18 +198,23 @@ public class LogService {
     @Transactional
     public void increaseLikeCount(Long logId, User user) {
         Log log = findByLogId(logId);
-        // 본인이 누를 수 없는 제약
-        if (!log.getUser().getUserId().equals(user.getUserId())) {
-            log.increaseLikes();
+        if (logLikeRepository.existsByUserAndLog(user, log)) {
+            throw new SalgulokException(ErrorCode.ALREADY_LIKED_LOG);
         }
+
+        LogLike logLike = new LogLike(user, log);
+        logLikeRepository.save(logLike);
+        log.increaseLikes();
     }
 
     @Transactional
     public void decreaseLikeCount(Long logId, User user) {
         Log log = findByLogId(logId);
-        if (!log.getUser().getUserId().equals(user.getUserId())) {
-            log.decreaseLikes();
-        }
+        LogLike logLike = logLikeRepository.findByUserAndLog(user, log)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.LIKE_NOT_FOUND));
+
+        logLikeRepository.delete(logLike);
+        log.decreaseLikes();
     }
 
     @Transactional
@@ -217,16 +231,22 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public List<LogResponse> getPublicLogs() {
+    public List<LogResponse> getPublicLogs(User user) {
         return logRepository.findByIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc()
-                .stream().map(LogResponse::from).toList();
+                .stream().map(log -> {
+                    boolean isLiked = user != null && logLikeRepository.existsByUserAndLog(user, log);
+                    return LogResponse.from(log, isLiked);
+                }).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<LogResponse> getPopularLogs() {
+    public List<LogResponse> getPopularLogs(User user) {
         // ⚠ 기존 중복 메서드 제거: 이 메서드 단 하나만 유지
         return logRepository.findPopularPublicAndUploaded()
-                .stream().map(LogResponse::from).toList();
+                .stream().map(log -> {
+                    boolean isLiked = user != null && logLikeRepository.existsByUserAndLog(user, log);
+                    return LogResponse.from(log, isLiked);
+                }).toList();
     }
 
     @Transactional
