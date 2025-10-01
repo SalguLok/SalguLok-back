@@ -34,7 +34,11 @@ public enum ErrorCode {
     LOG_ENTRY_NOT_IN_LOG(400, "해당 살구록에 존재하지 않는 하루 기록입니다."),
 
     // image
-    IMAGE_NOT_FOUND(404, "존재하는 이미지가 없습니다.");
+    IMAGE_NOT_FOUND(404, "존재하는 이미지가 없습니다."),
+
+    // log like
+    ALREADY_LIKED_LOG(409, "이미 좋아요를 누른 기록입니다."),
+    LIKE_NOT_FOUND(404, "좋아요를 누르지 않은 기록입니다.");
 
 
     private final int status;
