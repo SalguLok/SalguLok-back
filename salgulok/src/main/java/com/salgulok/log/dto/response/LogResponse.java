@@ -23,8 +23,9 @@ public class LogResponse {
     private Long likes;
     private Boolean isUpload;
     private Long ownerId;
+    private boolean isLiked;
 
-    public static LogResponse from(Log log){
+    public static LogResponse from(Log log, boolean isLiked){
         return LogResponse.builder()
                 .logId(log.getLogId())
                 .writer(log.getUser().getUsername())
@@ -39,6 +40,11 @@ public class LogResponse {
                 .likes(log.getLikes())
                 .isUpload(log.getIsUpload())
                 .ownerId(log.getUser().getUserId())
+                .isLiked(isLiked)
                 .build();
+    }
+
+    public static LogResponse from(Log log) {
+        return from(log, false);
     }
 }

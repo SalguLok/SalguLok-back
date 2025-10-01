@@ -76,31 +76,32 @@ public class LogController {
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @GetMapping("/search")
     public ResponseEntity<LogPagingListResponse> getLogs(
+            @AuthenticationPrincipal User user,
             @RequestParam(value = "keyword", required = false) String search,
             @RequestParam(value = "sort", defaultValue = "latest") String sort,
             @RequestParam(value = "regionId", defaultValue = "0") Long regionId,
             @RequestParam(value = "page", defaultValue = "0") int page
     ) {
-        LogPagingListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page);
+        LogPagingListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page, user);
         return ResponseEntity.ok(response);
     }
 
     // 전체 공개 살구록 리스트
     @GetMapping("/public")
-    public ResponseEntity<List<LogResponse>> getPublicLogs() {
-        return ResponseEntity.ok(logService.getPublicLogs());
+    public ResponseEntity<List<LogResponse>> getPublicLogs(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(logService.getPublicLogs(user));
     }
 
     // 내 살구록 리스트
     @GetMapping("/me")
     public ResponseEntity<List<LogResponse>> getMyLogs(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId()));
+        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId(), user));
     }
 
     // 특정 유저 살구록 리스트
     @GetMapping("/users/{userId}")
-    public ResponseEntity<List<LogResponse>> getUserLogs(@PathVariable Long userId) {
-        return ResponseEntity.ok(logService.getLogsByUser(userId));
+    public ResponseEntity<List<LogResponse>> getUserLogs(@AuthenticationPrincipal User user, @PathVariable Long userId) {
+        return ResponseEntity.ok(logService.getLogsByUser(userId, user));
     }
 
     // 특정 살구록 상세 조회 : 제목, 한줄평, 여행 시작일 및 종료일, 공개 여부, 여행 지역 ID, 대표 이미지 URL 모두 포함
@@ -141,8 +142,8 @@ public class LogController {
 
     // 로그 인기순 정렬 (프론트 실수 방지를 위해 공개 로그만 정렬함)
     @GetMapping("/popular")
-    public ResponseEntity<List<LogResponse>> getPopularLogs() {
-        return ResponseEntity.ok(logService.getPopularLogs());
+    public ResponseEntity<List<LogResponse>> getPopularLogs(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(logService.getPopularLogs(user));
     }
 
     @PatchMapping("/{logId}/upload")
