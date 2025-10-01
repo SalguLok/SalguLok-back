@@ -140,6 +140,13 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{logId}/is-liked")
+    public ResponseEntity<Boolean> isLiked(@AuthenticationPrincipal User user,
+                                           @PathVariable Long logId) {
+        boolean isLiked = logService.isLikedByUser(user, logId);
+        return ResponseEntity.ok(isLiked);
+    }
+
     // 로그 인기순 정렬 (프론트 실수 방지를 위해 공개 로그만 정렬함)
     @GetMapping("/popular")
     public ResponseEntity<List<LogResponse>> getPopularLogs(@AuthenticationPrincipal User user) {
