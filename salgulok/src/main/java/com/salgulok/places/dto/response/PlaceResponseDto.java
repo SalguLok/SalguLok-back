@@ -1,10 +1,7 @@
 package com.salgulok.places.dto.response;
 
 import com.salgulok.places.domain.Place;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,6 +24,9 @@ public class PlaceResponseDto {
     private double star;
     private int starCount;
 
+    @Setter
+    private Long logCount;
+
     public static PlaceResponseDto from(Place place) {
         return PlaceResponseDto.builder()
                 .place_id(place.getPlaceId())
@@ -41,7 +41,14 @@ public class PlaceResponseDto {
                 .overview(place.getOverview())
                 .star(round2(place.getStar()))
                 .starCount(place.getStarCount()!=null?place.getStarCount():0)
+                .logCount(0L)
                 .build();
+    }
+
+    public static PlaceResponseDto from(Place p, long logCount) {
+        PlaceResponseDto dto = from(p);
+        dto.setLogCount(logCount);
+        return dto;
     }
     private static double round2(Double v) {
         if (v == null) return 0.0;
