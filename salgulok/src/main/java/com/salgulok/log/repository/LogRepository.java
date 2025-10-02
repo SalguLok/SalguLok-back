@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,6 +86,19 @@ public interface LogRepository extends JpaRepository<Log, Long> {
        order by l.likes desc, l.view desc, l.createdAt desc
        """)
     List<Log> findPopularPublicAndUploaded();
+
+    //장소별 로그 개수 집계
+    @Query("""
+    select t.placeId as placeId, count(distinct l.logId) as cnt
+    from Template t
+    join t.logEntry le
+    join le.log l
+    where l.isPublic = true
+      and l.isUpload = true
+      and t.placeId in :placeIds
+    group by t.placeId
+""")
+    List<Object[]> countUploadedPublicLogsByPlaceIds(@Param("placeIds") Collection<Long> placeIds);
 
     // 장소 기반: 공개 + 게시 (최신순)
     @Query("""
