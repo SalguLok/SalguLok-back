@@ -179,16 +179,45 @@ public class PlaceService {
 
     public List<PlaceResponseDto> getPopularPlaces() {
         List<Place> popularPlaces = placeRepository.findPopularPlaces();
+        // 필요시 상위 20개 제한
+        popularPlaces = popularPlaces.stream().limit(20).toList();
 
+        // placeId 목록 추출
+        List<Long> placeIds = popularPlaces.stream()
+                .map(Place::getPlaceId)
+                .toList();
+
+        // 장소별 업로드+공개 로그 개수 집계
+        var raw = logRepository.countUploadedPublicLogsByPlaceIds(placeIds);
+        // [placeId -> cnt] 맵핑
+        var countMap = raw.stream().collect(
+                java.util.stream.Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                )
+        );
+
+        // DTO 변환 + logCount 주입 (없으면 0)
         return popularPlaces.stream()
-                .limit(20)
-                .map(PlaceResponseDto::from)
+                .map(p -> PlaceResponseDto.from(p, countMap.getOrDefault(p.getPlaceId(), 0L)))
                 .collect(Collectors.toList());
     }
 
     public List<PlaceResponseDto> getPopularPlacesByRegion(Long regionId) {
         List<Place> places = placeRepository.findPopularPlacesByRegion(regionId);
-        return places.stream().map(PlaceResponseDto::from).toList();
+
+        List<Long> placeIds = places.stream().map(Place::getPlaceId).toList();
+        var raw = logRepository.countUploadedPublicLogsByPlaceIds(placeIds);
+        var countMap = raw.stream().collect(
+                java.util.stream.Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]
+                )
+        );
+
+        return places.stream()
+                .map(p -> PlaceResponseDto.from(p, countMap.getOrDefault(p.getPlaceId(), 0L)))
+                .toList();
     }
 
     // 지역 ID → 문자열 주소 매핑 (예시용)
