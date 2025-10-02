@@ -64,6 +64,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
        JOIN le.log l
        WHERE t.placeId = :placeId
          AND l.isPublic = true
+         AND l.isUpload = true
        ORDER BY l.createdAt DESC
        """)
     List<Log> findPublicLogsByPlaceId(@Param("placeId") Long placeId);
