@@ -21,6 +21,8 @@ public enum ErrorCode {
     USER_NOT_FOUND(404, "존재하는 사용자가 없습니다."),
     OWNER_MISMATCH(400, "수정 및 삭제 권한이 존재하지 않습니다."),
     USER_INFO_EXIST(400, "첫 회원가입자가 아닙니다."),
+    
+    // redis
     REDIS_SAVE_ERROR(500, "redis에 저장 중 예상치 못한 에러가 발생했습니다."),
     REDIS_DELETE_ERROR(500, "redis에서 데이터 삭제 중 예상치 못한 에러가 발생했습니다."),
 

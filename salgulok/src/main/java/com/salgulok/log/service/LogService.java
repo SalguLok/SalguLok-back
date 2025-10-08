@@ -15,6 +15,7 @@ import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
 import com.salgulok.user.repository.UserRepository;
+import com.salgulok.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,8 @@ public class LogService {
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final LogScheduleService logScheduleService;
     private static final int LogPage_paging_size = 6;
 
     @Transactional
@@ -44,6 +47,8 @@ public class LogService {
         Region region = findByRegionId(request.getRegionId());
         Log log = request.toEntity(user, region);
         Log saveLog = logRepository.save(log);
+
+        logScheduleService.registerTravelSchedule(log);
         return saveLog.getLogId();
     }
 
@@ -51,6 +56,26 @@ public class LogService {
     public void deleteLog(User user, Long logId) {
         Log log = findByLogId(logId);
         authorizeUser(user, log);
+
+        LocalDate startDate = log.getStartDate();
+        LocalDate endDate = log.getEndDate();
+        LocalDate today = LocalDate.now();
+
+        // redis에 스케쥴링 되어있는 것 삭제
+        if (!startDate.isAfter(today)) {
+            // 시작일이 오늘이거나 이미 지난 경우
+            if (endDate.isAfter(today)) {
+                User changeUser = userService.findByUserId(user.getUserId());
+                changeUser.updateTravelStatus(true, log.getRegion());
+
+                logScheduleService.applyEndScheduleAndCleanupRedis(log, log.getEndDate());
+            }
+        } else {
+            // 시작 & 종료 예약
+            logScheduleService.applyStartScheduleAndCleanupRedis(log, log.getStartDate());
+            logScheduleService.applyEndScheduleAndCleanupRedis(log, log.getEndDate());
+        }
+
         logRepository.delete(log);
     }
 
@@ -268,22 +293,5 @@ public class LogService {
 
         logCommentRepository.delete(comment);
     }
-
-//    @Transactional(readOnly = true)
-//    public LogListResponse getLogBySearch(String search) {
-//        var list = logRepository
-//                .findByTitleContainingAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(search)
-//                .stream().map(LogResponse::from).toList();
-//        return new LogListResponse(list);
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public LogListResponse getLogByRegion(Long regionId) {
-//        Region region = findByRegionId(regionId);
-//        var list = logRepository
-//                .findByRegionAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(region)
-//                .stream().map(LogResponse::from).toList();
-//        return new LogListResponse(list);
-//    }
 
 }

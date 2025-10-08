@@ -71,7 +71,7 @@ public class UserService {
         return new IsTravelingResponse(true, currentTravelLog.getLogId(), currentTravelLog.getRegion().getRegionId());
     }
 
-    private User findByUserId(Long userId){
+    public User findByUserId(Long userId){
         return userRepository.findById(userId)
                 .orElseThrow(() -> new SalgulokException(ErrorCode.USER_NOT_FOUND));
     }

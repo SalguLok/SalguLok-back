@@ -61,4 +61,9 @@ public class User {
         this.intro = intro;
         this.profileImg = profileImg;
     }
+
+    public void updateTravelStatus(Boolean isTraveling, Region region){
+        this.isTraveling = isTraveling;
+        this.region = region;
+    }
 }
