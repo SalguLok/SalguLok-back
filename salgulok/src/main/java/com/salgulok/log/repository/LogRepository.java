@@ -15,14 +15,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
-    // 회원별 로그 조회 (내 로그용)
+    // 내 로그 조회
     Page<Log> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
+
+    // 타인 로그 조회
+    Page<Log> findByUserAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(User user, Pageable pageable);
 
     // 지역별 로그 조회 (공개 로그만)
     List<Log> findByRegionAndIsPublicTrueAndIsUploadTrue(Region region);
-
-    // 로그 검색 (공개 로그만)
-    List<Log> findByTitleContainingAndIsPublicTrue(String search);
 
     // 체류 전/중 여부 확인 후 log 반환(없을 시 null)
     @Query("""

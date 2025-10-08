@@ -15,6 +15,8 @@ import com.salgulok.log.repository.LogRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
+import com.salgulok.user.repository.UserRepository;
+import com.salgulok.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,7 +36,10 @@ public class LogService {
     private final LogLikeRepository logLikeRepository;
     private final LogCommentRepository logCommentRepository;
     private final RegionRepository regionRepository;
-    private static final int LogPage_paging_size = 4; // 추후 수정예정~ 일단 테스트로 4개만
+    private final UserRepository userRepository;
+    private final UserService userService;
+    private final LogScheduleService logScheduleService;
+    private static final int LogPage_paging_size = 6;
 
     @Transactional
     public Long createLog(User user, LogCreateRequest request) {
@@ -44,6 +49,8 @@ public class LogService {
         Region region = findByRegionId(request.getRegionId());
         Log log = request.toEntity(user, region);
         Log saveLog = logRepository.save(log);
+
+        logScheduleService.registerTravelSchedule(log);
         return saveLog.getLogId();
     }
 
@@ -51,6 +58,26 @@ public class LogService {
     public void deleteLog(User user, Long logId) {
         Log log = findByLogId(logId);
         authorizeUser(user, log);
+
+        LocalDate startDate = log.getStartDate();
+        LocalDate endDate = log.getEndDate();
+        LocalDate today = LocalDate.now();
+
+        // redis에 스케쥴링 되어있는 것 삭제
+        if (!startDate.isAfter(today)) {
+            // 시작일이 오늘이거나 이미 지난 경우
+            if (endDate.isAfter(today)) {
+                User changeUser = userService.findByUserId(user.getUserId());
+                changeUser.updateTravelStatus(true, log.getRegion());
+
+                logScheduleService.applyEndScheduleAndCleanupRedis(log, log.getEndDate());
+            }
+        } else {
+            // 시작 & 종료 예약
+            logScheduleService.applyStartScheduleAndCleanupRedis(log, log.getStartDate());
+            logScheduleService.applyEndScheduleAndCleanupRedis(log, log.getEndDate());
+        }
+
         logRepository.delete(log);
     }
 
@@ -149,12 +176,13 @@ public class LogService {
     }
 
     @Transactional(readOnly = true)
-    public List<LogResponse> getLogsByUser(Long userId, User currentUser) {
-        return logRepository.findByUser_UserId(userId)
-                .stream().map(log -> {
-                    boolean isLiked = currentUser != null && logLikeRepository.existsByUserAndLog(currentUser, log);
-                    return LogResponse.from(log, isLiked);
-                }).collect(Collectors.toList());
+    public LogPagingListResponse getLogsByUser(String username, int page) {
+        User findUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new SalgulokException(ErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, LogPage_paging_size);
+        Page<Log> logs = logRepository.findByUserAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(findUser, pageable);
+        return new LogPagingListResponse(logs);
     }
 
     @Transactional(readOnly = true)
@@ -295,7 +323,7 @@ public class LogService {
 
         logCommentRepository.delete(comment);
     }
-
+  
     // 한 줄 평 업로드
     @Transactional
     public void updateReview(User user, Long logId, LogReviewUpdateRequest request) {
@@ -303,6 +331,5 @@ public class LogService {
         authorizeUser(user, log);
         log.setOneReview(request.getOneReview()); // null이면 비우기
     }
-
 
 }

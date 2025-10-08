@@ -86,3 +86,5 @@ public class ImageMeta {
 
     public enum ThumbnailStatus {EMPTY, PENDING, DONE, FAILED}
 }
+
+

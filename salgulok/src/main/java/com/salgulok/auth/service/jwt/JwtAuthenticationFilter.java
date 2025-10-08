@@ -2,9 +2,9 @@ package com.salgulok.auth.service.jwt;
 
 import com.salgulok.auth.service.principal.CustomUserDetails;
 import com.salgulok.auth.service.principal.CustomUserDetailsService;
+import com.salgulok.global.exception.CustomAuthenticationException;
 import com.salgulok.global.exception.ErrorCode;
 import com.salgulok.global.exception.SalgulokException;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -27,34 +27,62 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtManager jwtManager;
+    private final TokenService tokenService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest servletRequest,
-                                    HttpServletResponse servletResponse,
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String authorization = servletRequest.getHeader("Authorization");
-            if(authorization != null){
-                String token = jwtManager.substringToken(authorization);
-                Claims claims = jwtManager.extractClaims(token);
+        String authorization = request.getHeader("Authorization");
 
-                String userId = claims.getSubject();
-
-                CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
-
-                Authentication auth = new UsernamePasswordAuthenticationToken(customUserDetails.getUser(), null, customUserDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+        if (authorization != null) {
+            try {
+                handleAuthorizationHeader(request, response, authorization);
+            } catch (CustomAuthenticationException ex) {
+                authenticationEntryPoint.commence(request, response, ex);
+                return;
             }
-        } catch (ExpiredJwtException e) {
-            // 토큰 만료 에러
-            throw new SalgulokException(ErrorCode.ACCESS_TOKEN_EXPIRED);
-        } catch (JwtException | IllegalArgumentException e) {
-            // 토큰 변조 등으로 인한 토큰 유효성 에러
-            throw new SalgulokException(ErrorCode.ACCESS_TOKEN_INVALID);
         }
 
-        // 다음 필터 계속 실행
-        filterChain.doFilter(servletRequest, servletResponse);
+        // 정상 요청만 다음 필터로 전달
+        filterChain.doFilter(request, response);
+    }
+
+    private void handleAuthorizationHeader(HttpServletRequest request,
+                                           HttpServletResponse response,
+                                           String authorization) {
+        String accessToken = jwtManager.substringToken(authorization);
+
+        checkBlacklist(accessToken, request, response);
+
+        String userId = getUserIdFromToken(accessToken);
+
+        // @AuthenticationPrincipal에 User 주입
+        CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(userId);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                customUserDetails.getUser(), null, customUserDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    private void checkBlacklist(String accessToken,
+                                HttpServletRequest request,
+                                HttpServletResponse response) {
+        if (tokenService.isAccessTokenBlacklisted(accessToken)) {
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_IN_BLACKLIST);
+        }
+    }
+
+    private String getUserIdFromToken(String accessToken) {
+        try {
+            return jwtManager.getUserIdFromClaims(accessToken);
+        } catch (ExpiredJwtException e) {
+            // 토큰 만료 에러
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_EXPIRED);
+        } catch (JwtException | IllegalArgumentException e) {
+            // 토큰 변조 등으로 인한 토큰 유효성 에러
+            throw new CustomAuthenticationException(ErrorCode.ACCESS_TOKEN_INVALID);
+        }
     }
 }

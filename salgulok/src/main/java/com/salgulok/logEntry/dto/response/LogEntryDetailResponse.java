@@ -33,4 +33,6 @@ public class LogEntryDetailResponse {
         private String resolvedUrl; // 표준화된 URL (프론트는 이 값만 사용)
         private String presignedUrl; // S3 private 버킷 접근용 presigned URL
     }
+
 }
+

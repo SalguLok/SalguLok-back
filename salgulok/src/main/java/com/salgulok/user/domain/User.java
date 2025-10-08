@@ -23,9 +23,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Long kakaoId;
 
+    @Column(unique = true)
     private String username;
 
     @Column(name = "profile_img")
@@ -53,5 +54,16 @@ public class User {
 
     public void updateLastLoginAt() {
         this.lastLoginAt = LocalDateTime.now();
+    }
+
+    public void updateUserInfo(String username, String intro, String profileImg){
+        this.username = username;
+        this.intro = intro;
+        this.profileImg = profileImg;
+    }
+
+    public void updateTravelStatus(Boolean isTraveling, Region region){
+        this.isTraveling = isTraveling;
+        this.region = region;
     }
 }

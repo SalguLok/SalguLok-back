@@ -12,12 +12,19 @@ public enum ErrorCode {
 
     // auth
     KAKAO_LOGIN_ERROR(401, "카카오 로그인 인증에 실패했습니다."),
-    REFRESH_TOKEN_EMPTY(400, "리프레시 토큰이 존재하지 않습니다."),
+    REFRESH_TOKEN_INVALID(401, "리프레시 토큰 정보가 일치하지 않습니다."),
+    REFRESH_TOKEN_EXPIRED(401, "리프레시 토큰이 만료되었습니다."),
+    ACCESS_TOKEN_IN_BLACKLIST(401, "잘못된 엑세스토큰입니다."),
     ACCESS_TOKEN_EMPTY(401, "엑세스 토큰이 존재하지 않습니다."),
     ACCESS_TOKEN_INVALID(401, "엑세스 토큰이 유효하지 않습니다."),
     ACCESS_TOKEN_EXPIRED(401, "엑세스 토큰이 만료됐습니다."),
     USER_NOT_FOUND(404, "존재하는 사용자가 없습니다."),
     OWNER_MISMATCH(400, "수정 및 삭제 권한이 존재하지 않습니다."),
+    USER_INFO_EXIST(400, "첫 회원가입자가 아닙니다."),
+    
+    // redis
+    REDIS_SAVE_ERROR(500, "redis에 저장 중 예상치 못한 에러가 발생했습니다."),
+    REDIS_DELETE_ERROR(500, "redis에서 데이터 삭제 중 예상치 못한 에러가 발생했습니다."),
 
     // region
     REGION_NOT_FOUND(404, "존재하는 지역코드가 없습니다."),
