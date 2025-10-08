@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @EnableAsync
 @EnableJpaAuditing
-@EnableAsync
 @SpringBootApplication
 public class SalgulokApplication {
 

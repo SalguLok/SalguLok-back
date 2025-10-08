@@ -1,9 +1,5 @@
 package com.salgulok.log.controller;
 
-//import com.salgulok.log.dto.request.LogCheckRequest;
-//import com.salgulok.log.dto.request.LogCommentCreateRequest;
-//import com.salgulok.log.dto.request.LogCreateRequest;
-//import com.salgulok.log.dto.request.LogUpdateRequest;
 import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.service.LogService;
@@ -91,12 +87,6 @@ public class LogController {
     public ResponseEntity<List<LogResponse>> getPublicLogs(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(logService.getPublicLogs(user));
     }
-
-    // 내 살구록 리스트
-//    @GetMapping("/me")
-//    public ResponseEntity<List<LogResponse>> getMyLogs(@AuthenticationPrincipal User user) {
-//        return ResponseEntity.ok(logService.getLogsByUser(user.getUserId()));
-//    }
 
     // 특정 유저 살구록 리스트
     @GetMapping("/users/{username}")
