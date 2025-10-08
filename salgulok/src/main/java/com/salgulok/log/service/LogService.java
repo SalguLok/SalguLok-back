@@ -5,13 +5,11 @@ import com.salgulok.global.exception.SalgulokException;
 import com.salgulok.log.domain.Log;
 import com.salgulok.log.domain.LogComment;
 import com.salgulok.log.domain.LogLike;
-
 import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.repository.LogCommentRepository;
 import com.salgulok.log.repository.LogLikeRepository;
 import com.salgulok.log.repository.LogRepository;
-
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.user.domain.User;
@@ -182,7 +180,10 @@ public class LogService {
 
         Pageable pageable = PageRequest.of(page, LogPage_paging_size);
         Page<Log> logs = logRepository.findByUserAndIsPublicTrueAndIsUploadTrueOrderByCreatedAtDesc(findUser, pageable);
-        return new LogPagingListResponse(logs);
+        return new LogPagingListResponse(logs.map(log -> {
+            boolean isLiked = findUser != null && logLikeRepository.existsByUserAndLog(findUser, log);
+            return LogResponse.from(log, isLiked);
+        }));
     }
 
     @Transactional(readOnly = true)
@@ -331,5 +332,4 @@ public class LogService {
         authorizeUser(user, log);
         log.setOneReview(request.getOneReview()); // null이면 비우기
     }
-
 }
