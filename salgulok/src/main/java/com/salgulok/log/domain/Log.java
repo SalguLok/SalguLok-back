@@ -40,6 +40,10 @@ public class Log {
     @OneToMany(mappedBy = "log", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<LogEntry> logEntries = new ArrayList<>();
 
+	// 삭제 시 댓글도 함께 제거
+	@OneToMany(mappedBy = "log", cascade = CascadeType.REMOVE, orphanRemoval = true)
+	private List<LogComment> comments = new ArrayList<>();
+
     @Column(nullable = false)
     private String title;
 
@@ -110,5 +114,10 @@ public class Log {
     public void setUpload(boolean upload) {
         this.isUpload = upload;
     }
+
+    public void setOneReview(String oneReview) { // null 허용
+        this.oneReview = oneReview;
+    }
+
 
 }

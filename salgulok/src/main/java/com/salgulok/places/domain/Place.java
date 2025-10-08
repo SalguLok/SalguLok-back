@@ -33,10 +33,11 @@ public class Place{
     private String tel;
     private String overview;
 
-    @Column(name="star", nullable=false)
+    @Builder.Default
     private Double star =0.0;
 
-    @Column(name="star_count", nullable=false)
+    @Column(nullable = false)
+    @Builder.Default
     private Integer starCount=0;
 
     @Column(name = "region_id")

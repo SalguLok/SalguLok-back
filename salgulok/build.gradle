@@ -45,6 +45,7 @@ dependencies {
 	implementation 'software.amazon.awssdk:s3:2.25.69'
 	implementation 'software.amazon.awssdk:auth:2.25.69'
 	implementation 'software.amazon.awssdk:regions:2.25.69'
+	implementation 'net.coobird:thumbnailator:0.4.20' // 이미지 리사이징
 }
 
 

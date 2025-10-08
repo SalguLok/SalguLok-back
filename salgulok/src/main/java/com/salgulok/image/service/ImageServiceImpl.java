@@ -5,7 +5,9 @@ import com.salgulok.image.dto.request.ImageConfirmRequest;
 import com.salgulok.image.dto.request.PresignedUrlRequest;
 import com.salgulok.image.dto.response.ImageConfirmResponse;
 import com.salgulok.image.dto.response.PresignedUrlResponse;
+import com.salgulok.image.infra.ImageUrlResolver;
 import com.salgulok.image.repository.ImageMetaRepository;
+import com.salgulok.image.service.async.ImageResizeService;
 import com.salgulok.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,8 @@ public class ImageServiceImpl implements ImageService {
 
     private final S3Presigner s3Presigner;
     private final ImageMetaRepository imageMetaRepository;
+    private final ImageUrlResolver imageUrlResolver;
+    private final ImageResizeService imageResizeService;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -117,7 +121,8 @@ public class ImageServiceImpl implements ImageService {
                 .fileName(null) // 다운로드할 때만 필요하면 세팅
                 .objectKey(objectKey)
                 .presignedUrl(presigned.url().toString())
-                .contentType("image/*")
+                // GET presigned URL은 헤더 없는 <img src> 요청을 지원해야 하므로 contentType은 서명/헤더에 포함하지 않음
+                .contentType(null)
                 .expiresInSec(Duration.ofMinutes(5).toSeconds())
                 .build();
 
@@ -141,6 +146,9 @@ public class ImageServiceImpl implements ImageService {
                 throw new IllegalArgumentException("objectKey is required");
             }
 
+            // URL이 없으면 objectKey로 자동 생성
+            String resolvedUrl = imageUrlResolver.resolveUrlOrDefault(item.getUrl(), item.getObjectKey());
+
             // 멱등 처리: (user, objectKey) 중복 confirm 시 기존 레코드 재사용
             var meta = imageMetaRepository
                     .findByUser_UserIdAndObjectKey(userId, item.getObjectKey())
@@ -148,13 +156,19 @@ public class ImageServiceImpl implements ImageService {
                             ImageMeta.builder()
                                     .user(user)
                                     .objectKey(item.getObjectKey())
-                                    .url(item.getUrl())
+                                    .url(resolvedUrl) // 자동 생성된 URL 사용
                                     .fileName(item.getFileName())
                                     .contentType(item.getContentType())
                                     .size(item.getSize())
                                     .status(ImageMeta.Status.CONFIRMED)
                                     .build()
                     ));
+
+            // 썸네일 생성
+            if (meta.getThumbnailStatus() == ImageMeta.ThumbnailStatus.EMPTY) {
+                meta.markThumbnailPending();
+                imageResizeService.resizeAndUpload(meta.getId());
+            }
 
             ids.add(meta.getId());
         }

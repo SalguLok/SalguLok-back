@@ -1,10 +1,10 @@
 package com.salgulok.log.controller;
 
-import com.salgulok.log.dto.request.LogCheckRequest;
-import com.salgulok.log.dto.request.LogCommentCreateRequest;
-import com.salgulok.log.dto.request.LogCreateRequest;
-import com.salgulok.log.dto.request.LogUpdateRequest;
-import com.salgulok.log.dto.request.LogUploadUpdateRequest;
+//import com.salgulok.log.dto.request.LogCheckRequest;
+//import com.salgulok.log.dto.request.LogCommentCreateRequest;
+//import com.salgulok.log.dto.request.LogCreateRequest;
+//import com.salgulok.log.dto.request.LogUpdateRequest;
+import com.salgulok.log.dto.request.*;
 import com.salgulok.log.dto.response.*;
 import com.salgulok.log.service.LogService;
 import com.salgulok.user.domain.User;
@@ -76,19 +76,20 @@ public class LogController {
     // 살구록 검색 (키워드 검색/소팅/지역검색)
     @GetMapping("/search")
     public ResponseEntity<LogPagingListResponse> getLogs(
+            @AuthenticationPrincipal User user,
             @RequestParam(value = "keyword", required = false) String search,
             @RequestParam(value = "sort", defaultValue = "latest") String sort,
             @RequestParam(value = "regionId", defaultValue = "0") Long regionId,
             @RequestParam(value = "page", defaultValue = "0") int page
     ) {
-        LogPagingListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page);
+        LogPagingListResponse response = logService.getLogBySearchAndFiltering(search, sort, regionId, page, user);
         return ResponseEntity.ok(response);
     }
 
     // 전체 공개 살구록 리스트
     @GetMapping("/public")
-    public ResponseEntity<List<LogResponse>> getPublicLogs() {
-        return ResponseEntity.ok(logService.getPublicLogs());
+    public ResponseEntity<List<LogResponse>> getPublicLogs(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(logService.getPublicLogs(user));
     }
 
     // 내 살구록 리스트
@@ -121,6 +122,12 @@ public class LogController {
     }
 
     // 좋아요 로직
+    @GetMapping("/{logId}/likes")
+    public ResponseEntity<Long> getLikeCount(@PathVariable Long logId) {
+        Long likeCount = logService.getLikeCount(logId);
+        return ResponseEntity.ok(likeCount);
+    }
+
     @PostMapping("/{logId}/likes")
     public ResponseEntity<Void> increaseLike(@AuthenticationPrincipal User user,
                                              @PathVariable Long logId) {
@@ -135,10 +142,17 @@ public class LogController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{logId}/is-liked")
+    public ResponseEntity<Boolean> isLiked(@AuthenticationPrincipal User user,
+                                           @PathVariable Long logId) {
+        boolean isLiked = logService.isLikedByUser(user, logId);
+        return ResponseEntity.ok(isLiked);
+    }
+
     // 로그 인기순 정렬 (프론트 실수 방지를 위해 공개 로그만 정렬함)
     @GetMapping("/popular")
-    public ResponseEntity<List<LogResponse>> getPopularLogs() {
-        return ResponseEntity.ok(logService.getPopularLogs());
+    public ResponseEntity<List<LogResponse>> getPopularLogs(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(logService.getPopularLogs(user));
     }
 
     @PatchMapping("/{logId}/upload")
@@ -148,6 +162,8 @@ public class LogController {
         logService.updateUploadStatus(user, logId, request.getIsUpload());
         return ResponseEntity.ok().build();
     }
+
+    //로그 댓글 달기!!
 
     @PostMapping("/{logId}/comments")
     public ResponseEntity<Long> createComment(@AuthenticationPrincipal User user,
@@ -171,5 +187,16 @@ public class LogController {
         logService.deleteComment(user, logId, commentId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{logId}/review")
+    public ResponseEntity<Void> updateReview(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long logId,
+            @RequestBody LogReviewUpdateRequest request
+    ) {
+        logService.updateReview(user, logId, request);
+        return ResponseEntity.ok().build();
+    }
+
 
 }
