@@ -63,7 +63,7 @@ public class TourDetailService {
      * detailCommon1 API 호출 - 공통 정보
      */
     private TourDetailDto.CommonInfo getDetailCommon(Long contentId) {
-        String url = "https://apis.data.go.kr/B551011/KorService2/detailCommon1"
+        String url = "https://apis.data.go.kr/B551011/KorService2/detailCommon2"
                 + "?serviceKey=" + serviceKey
                 + "&MobileOS=ETC"
                 + "&MobileApp=SalguLok"
@@ -93,7 +93,7 @@ public class TourDetailService {
      * detailIntro1 API 호출 - 소개 정보
      */
     private TourDetailDto.IntroInfo getDetailIntro(Long contentId, Integer contentTypeId) {
-        String url = "https://apis.data.go.kr/B551011/KorService2/detailIntro1"
+        String url = "https://apis.data.go.kr/B551011/KorService2/detailIntro2"
                 + "?serviceKey=" + serviceKey
                 + "&MobileOS=ETC"
                 + "&MobileApp=SalguLok"
