@@ -53,7 +53,7 @@ public class KeywordTourService {
                 + "&MobileApp=TestApp"
                 + "&_type=json"
                 + "&keyword=" + encodedKeyword
-                + "&numOfRows=" + 20
+                + "&numOfRows=" + 2
                 + "&pageNo=" + 1;
 
         String response = tourApiWebClient.get()
