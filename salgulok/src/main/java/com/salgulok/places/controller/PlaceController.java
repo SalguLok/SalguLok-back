@@ -17,16 +17,19 @@ public class PlaceController {
 
     // 1. 키워드 지역 + 장소 검색
     @GetMapping
-    public List<PlaceResponseDto> searchPlaces(@RequestParam("keyword") String keyword, @RequestParam(defaultValue="false") boolean sync) {
-        if(sync){
+    public List<PlaceResponseDto> searchPlaces(
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue="false") boolean sync,
+            @RequestParam(name = "includeIntro", defaultValue = "true") boolean includeIntro
+    ) {
+        if (sync) {
             placeService.syncFromKeyword(keyword);
         }
-        var results=placeService.searchPlaces(keyword);
-        if(!sync&&results.isEmpty()){
+        var results = placeService.searchPlaces(keyword, includeIntro);
+        if (!sync && results.isEmpty()) {
             placeService.syncFromKeyword(keyword);
-            results=placeService.searchPlaces(keyword);
+            results = placeService.searchPlaces(keyword, includeIntro);
         }
-
         return results;
     }
 
