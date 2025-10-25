@@ -1,6 +1,7 @@
 package com.salgulok.places.dto.response;
 
 import com.salgulok.places.domain.Place;
+import com.salgulok.tourapi.dto.TourDetailDto;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -27,6 +28,9 @@ public class PlaceResponseDto {
     @Setter
     private Long logCount;
 
+    @Setter
+    private TourDetailDto.IntroInfo introInfo;
+
     public static PlaceResponseDto from(Place place) {
         return PlaceResponseDto.builder()
                 .place_id(place.getPlaceId())
@@ -50,6 +54,13 @@ public class PlaceResponseDto {
         dto.setLogCount(logCount);
         return dto;
     }
+
+    public static PlaceResponseDto from(Place p, TourDetailDto.IntroInfo introInfo) {
+        PlaceResponseDto dto = from(p);
+        dto.setIntroInfo(introInfo);
+        return dto;
+    }
+
     private static double round2(Double v) {
         if (v == null) return 0.0;
         return BigDecimal.valueOf(v).setScale(2, RoundingMode.HALF_UP).doubleValue();

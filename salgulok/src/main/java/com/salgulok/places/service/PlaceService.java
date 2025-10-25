@@ -10,8 +10,10 @@ import com.salgulok.places.repository.PlaceRepository;
 import com.salgulok.region.domain.Region;
 import com.salgulok.region.repository.RegionRepository;
 import com.salgulok.tourapi.dto.LocationTourDto;
+import com.salgulok.tourapi.dto.TourDetailDto;
 import com.salgulok.tourapi.service.KeywordTourService;
 import com.salgulok.tourapi.service.LocationTourService;
+import com.salgulok.tourapi.service.TourDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final LocationTourService tourService;
     private final KeywordTourService keywordTourService;
+    private final TourDetailService tourDetailService;
     private final LogRepository logRepository;
     private final TemplateRepository templateRepository;
     private final RegionRepository regionRepository;
@@ -148,6 +151,34 @@ public class PlaceService {
 
         return places.stream()
                 .map(PlaceResponseDto::from)
+                .collect(Collectors.toList());
+    }
+
+    public List<PlaceResponseDto> searchPlaces(String keyword, boolean includeIntro) {
+        List<Place> places = placeRepository.findByPlaceNameContaining(keyword);
+
+        if (!includeIntro) {
+            return places.stream()
+                    .map(PlaceResponseDto::from)
+                    .collect(Collectors.toList());
+        }
+
+        // introInfo만 붙여서 반환 (commonInfo는 무시)
+        return places.parallelStream()
+                .map(p -> {
+                    TourDetailDto.IntroInfo intro = null;
+                    Long cid = p.getContentId();
+                    Integer ctype = p.getContentTypeId();
+                    if (cid != null && ctype != null) {
+                        try {
+                            TourDetailDto detail = tourDetailService.getTourDetail(cid, ctype);
+                            if (detail != null) intro = detail.getIntroInfo();
+                        } catch (Exception e) {
+                            System.err.println("[PlaceService] detailIntro fetch failed: cid=" + cid + ", msg=" + e.getMessage());
+                        }
+                    }
+                    return PlaceResponseDto.from(p, intro);
+                })
                 .collect(Collectors.toList());
     }
 
